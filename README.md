@@ -4,15 +4,14 @@
 
 ## 👥 Thành viên nhóm & Phân công vai trò
 
-**Lớp:** 3A · **Phòng:** E403 · **Cụm:** ____ · **Track:** ____
+**Lớp:** 3A · **Phòng:** ____ · **Cụm:** ____ · **Track:** ____
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-| Thiều Quang Vinh | 2A202602877 | Nhóm trưởng |  |
-| Đỗ Trịnh Huy Hoàng | 2A202602392 |  |  |
-| Hoàng Bích Ngọc | 2A202602766 |  |  |
-| Vũ Hiếu Thiên | 2A202602867 |  |  |
-| Lê Tuấn Hưng | 2A202602665 |  |  |
+|  |  |  |  |
+|  |  |  |  |
+|  |  |  |  |
+|  |  |  |  |
 
 > Nhóm copy nguyên file README này về repo của mình, rồi điền bảng trên. Cột **Phần việc đảm nhiệm** ghi càng cụ thể càng tốt.
 
