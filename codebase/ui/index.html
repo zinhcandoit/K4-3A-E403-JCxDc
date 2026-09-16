@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VLearn D3 — Học bằng cách Dạy | Feynman Method</title>
+  <meta name="description" content="Prototype D3: Học viên dạy lại khái niệm cho AI agent, agent hỏi ngược tại chỗ hổng — phương pháp Feynman.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ===== DESIGN TOKENS ===== */
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #1a1d29;
+      --bg-card: #21243280;
+      --bg-hover: #2a2d3d;
+      --bg-agent: #1e293b;
+      --bg-user: #1e3a5f;
+      --bg-slide: #161825;
+      --text-primary: #e8eaed;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-blue: #3b82f6;
+      --accent-blue-glow: #3b82f640;
+      --accent-orange: #f97316;
+      --accent-orange-glow: #f9731640;
+      --accent-green: #10b981;
+      --accent-green-glow: #10b98140;
+      --accent-purple: #8b5cf6;
+      --accent-red: #ef4444;
+      --accent-yellow: #fbbf24;
+      --border: #2d3040;
+      --border-light: #3d4050;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ===== GLOBAL UTILITIES ===== */
+    .hidden { display: none !important; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    .slide-up { animation: slideUp 0.5s ease-out forwards; }
+    .scale-in { animation: scaleIn 0.3s ease-out forwards; }
+    .pulse { animation: pulse 2s infinite; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+    @keyframes typing { 0% { width: 0; } 100% { width: 100%; } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-12px); }
+      60% { transform: translateY(-6px); }
+    }
+
+    /* ===== HEADER / NAV BAR ===== */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 56px; z-index: 100;
+      background: rgba(15, 17, 23, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 24px;
+    }
+    .navbar-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 18px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .navbar-brand svg { flex-shrink: 0; }
+    .navbar-phase {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .phase-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--border-light);
+      transition: var(--transition);
+    }
+    .phase-dot.active {
+      background: var(--accent-blue);
+      box-shadow: 0 0 8px var(--accent-blue-glow);
+    }
+    .phase-dot.completed { background: var(--accent-green); }
+    .phase-label {
+      font-size: 13px; color: var(--text-secondary);
+      margin-left: 4px;
+    }
+
+    /* ===== PHASE 1: KHỞI ĐỘNG ===== */
+    #phase1 {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 80px 24px 40px;
+      text-align: center;
+    }
+    .lesson-complete-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 20px; border-radius: 99px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-green);
+      font-size: 14px; font-weight: 500;
+      margin-bottom: 32px;
+      animation: fadeIn 0.6s ease-out;
+    }
+    .lesson-complete-badge svg { flex-shrink: 0; }
+    .hero-title {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800; line-height: 1.15;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: slideUp 0.7s ease-out;
+    }
+    .hero-subtitle {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin-bottom: 40px;
+      animation: slideUp 0.8s ease-out;
+    }
+    .hero-card {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59,130,246,0.08) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      max-width: 520px; width: 100%;
+      animation: slideUp 0.9s ease-out;
+    }
+    .challenge-icon {
+      width: 72px; height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px var(--accent-orange-glow);
+      animation: float 3s ease-in-out infinite;
+    }
+    .challenge-title {
+      font-size: 22px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .challenge-desc {
+      font-size: 14px; color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    .topic-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--accent-purple);
+      font-size: 13px; font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 32px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 16px; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 20px var(--accent-blue-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-blue);
+      color: var(--text-primary);
+    }
+    .no-pressure {
+      display: flex; align-items: center; gap: 6px;
+      justify-content: center;
+      margin-top: 16px;
+      font-size: 13px; color: var(--text-muted);
+    }
+
+    /* ===== PHASE 2: TƯƠNG TÁC DẠY HỌC ===== */
+    #phase2 {
+      display: none;
+      height: 100vh;
+      padding-top: 56px;
+    }
+    .teaching-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      height: calc(100vh - 56px);
+    }
+
+    /* Slide Panel */
+    .slide-panel {
+      background: var(--bg-slide);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .slide-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .slide-header-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(139, 92, 246, 0.15);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .slide-header-text h3 {
+      font-size: 14px; font-weight: 600;
+    }
+    .slide-header-text span {
+      font-size: 12px; color: var(--text-muted);
+    }
+    .slide-nav {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; gap: 6px; overflow-x: auto;
+    }
+    .slide-nav-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    .slide-nav-btn.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+    .slide-nav-btn:hover:not(.active) {
+      background: var(--bg-hover);
+    }
+    .slide-content {
+      flex: 1; overflow-y: auto;
+      padding: 20px;
+    }
+    .slide-content h4 {
+      font-size: 16px; font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--accent-blue);
+    }
+    .slide-content p {
+      font-size: 14px; line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .slide-content .highlight {
+      background: rgba(251, 191, 36, 0.1);
+      border-left: 3px solid var(--accent-yellow);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    .slide-content .formula {
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--accent-purple);
+      text-align: center;
+      margin: 12px 0;
+    }
+    .slide-content ul {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+    .slide-content li {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    /* Chat Panel */
+    .chat-panel {
+      display: flex; flex-direction: column;
+      background: var(--bg-primary);
+    }
+    .chat-header {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chat-header-left {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .agent-avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .agent-info h3 { font-size: 15px; font-weight: 600; }
+    .agent-info span {
+      font-size: 12px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .agent-info .online-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-green);
+    }
+    .chat-progress {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .progress-bar-mini {
+      width: 120px; height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .progress-bar-mini .fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      transition: width 0.5s ease;
+    }
+    .progress-label {
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    /* Chat Messages */
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .message {
+      display: flex; gap: 12px;
+      max-width: 85%;
+      animation: slideUp 0.3s ease-out;
+    }
+    .message.agent { align-self: flex-start; }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .message-avatar {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .message.agent .message-avatar {
+      background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+    }
+    .message.user .message-avatar {
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+    }
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 14px; line-height: 1.6;
+    }
+    .message.agent .message-bubble {
+      background: var(--bg-agent);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+    }
+    .message.user .message-bubble {
+      background: var(--bg-user);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-top-right-radius: 4px;
+    }
+    .message-bubble .ref-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      color: var(--accent-purple);
+      font-size: 11px; font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .message-bubble .ref-tag:hover {
+      background: rgba(139, 92, 246, 0.25);
+    }
+    .message-meta {
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .typing-indicator {
+      display: flex; gap: 4px; padding: 4px 0;
+    }
+    .typing-indicator span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-muted);
+      animation: blink 1.4s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Chat Input */
+    .chat-input-area {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    .chat-input-wrapper {
+      display: flex; align-items: flex-end; gap: 12px;
+    }
+    .chat-input {
+      flex: 1; min-height: 44px; max-height: 120px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 14px; line-height: 1.5;
+      resize: none; outline: none;
+      transition: var(--transition);
+    }
+    .chat-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px var(--accent-blue-glow);
+    }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .btn-send {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-send:hover { transform: scale(1.05); }
+    .btn-send:disabled {
+      opacity: 0.4; cursor: not-allowed;
+      transform: none;
+    }
+    .chat-hint {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* ===== AGENT PERCEPTION HUD (BPE + MIN-EDIT-DISTANCE) ===== */
+    .btn-perception-toggle {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 20px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      color: #c4b5fd; font-family: var(--font); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: var(--transition);
+    }
+    .btn-perception-toggle:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 12px var(--accent-purple-glow);
+    }
+    .btn-perception-toggle .pulse-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .perception-inspector {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+      border-bottom: 1px solid rgba(139, 92, 246, 0.25);
+      padding: 12px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+      overflow: hidden;
+      max-height: 290px;
+    }
+    .perception-inspector.collapsed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      opacity: 0;
+      border-bottom: none;
+    }
+    .perception-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .perception-title {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .perception-title .perception-icon {
+      font-size: 16px;
+      filter: drop-shadow(0 0 6px rgba(234, 179, 8, 0.6));
+    }
+    .perception-title strong {
+      font-size: 13px; font-weight: 700; color: #f1f5f9; letter-spacing: 0.3px;
+    }
+    .perception-title .subtext {
+      font-size: 11px; color: #94a3b8; margin-left: 6px;
+    }
+    .perception-actions {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-xs {
+      padding: 4px 10px; border-radius: 6px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd; font-family: var(--font); font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-xs:hover {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: #60a5fa;
+      color: #fff;
+    }
+    .perception-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 12px;
+    }
+    .perception-label {
+      color: #cbd5e1; font-weight: 600; min-width: 95px;
+      flex-shrink: 0; padding-top: 2px;
+    }
+    .bpe-token-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .token-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 6px;
+      font-family: 'Fira Code', 'Consolas', monospace; font-size: 11px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      animation: fadeIn 0.2s ease;
+    }
+    .token-chip.subword {
+      background: rgba(168, 85, 247, 0.18);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #d8b4fe;
+    }
+    .token-chip.special {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+    .token-placeholder {
+      color: #64748b; font-style: italic; font-size: 11px;
+    }
+    .candidate-match-list {
+      display: flex; flex-direction: column; gap: 6px; width: 100%;
+    }
+    .candidate-card {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 6px 10px; border-radius: 6px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 11.5px;
+      transition: all 0.2s;
+    }
+    .candidate-card.matched {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .candidate-card-left {
+      display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+    }
+    .candidate-tag {
+      padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+      white-space: nowrap;
+    }
+    .candidate-card.matched .candidate-tag {
+      background: rgba(16, 185, 129, 0.25); color: #34d399;
+    }
+    .candidate-card:not(.matched) .candidate-tag {
+      background: rgba(148, 163, 184, 0.15); color: #94a3b8;
+    }
+    .candidate-name {
+      color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .candidate-card-right {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .dist-badge {
+      font-family: monospace; font-size: 10.5px; color: #94a3b8;
+    }
+    .confidence-meter {
+      display: flex; align-items: center; gap: 6px; width: 95px;
+    }
+    .confidence-track {
+      flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden;
+    }
+    .confidence-bar {
+      height: 100%; border-radius: 3px; transition: width 0.4s ease;
+    }
+    .confidence-num {
+      font-family: monospace; font-size: 11px; font-weight: 700; min-width: 34px; text-align: right;
+    }
+
+    .message-bubble .perception-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 8px; padding: 4px 10px; border-radius: 6px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      font-size: 11px; color: #c4b5fd;
+    }
+    .message-bubble .perception-badge .view-dp-link {
+      color: #60a5fa; text-decoration: underline; cursor: pointer; margin-left: 4px; font-weight: 600;
+    }
+
+    /* Dynamic Programming Matrix Modal */
+    .dp-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 300;
+      animation: fadeIn 0.25s ease;
+    }
+    .dp-modal-overlay.hidden { display: none; }
+    .dp-modal-card {
+      background: #0f172a; border: 1px solid rgba(139, 92, 246, 0.35);
+      border-radius: 16px; padding: 24px; width: 92%; max-width: 880px; max-height: 88vh;
+      display: flex; flex-direction: column; gap: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      animation: scaleIn 0.3s ease;
+    }
+    .dp-modal-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;
+    }
+    .dp-modal-title h3 {
+      font-size: 17px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px;
+    }
+    .dp-modal-title p {
+      font-size: 12.5px; color: #94a3b8; margin-top: 4px;
+    }
+    .dp-modal-close {
+      background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; padding: 0 4px;
+    }
+    .dp-modal-close:hover { color: #fff; }
+    .dp-modal-body {
+      overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+    }
+    .dp-meta-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .dp-meta-item {
+      background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 8px; padding: 10px 12px;
+    }
+    .dp-meta-item .label { font-size: 11px; color: #94a3b8; }
+    .dp-meta-item .val { font-size: 14px; font-weight: 700; color: #60a5fa; margin-top: 2px; font-family: monospace; }
+    .dp-table-scroll {
+      max-height: 380px; overflow: auto; border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2); background: #0b1120;
+    }
+    .dp-table {
+      width: 100%; border-collapse: collapse; font-family: 'Fira Code', 'Consolas', monospace; font-size: 11px; text-align: center;
+    }
+    .dp-table th, .dp-table td {
+      border: 1px solid rgba(148, 163, 184, 0.15); padding: 5px 8px; min-width: 28px;
+    }
+    .dp-table th {
+      background: rgba(30, 41, 59, 0.9); color: #f1f5f9; position: sticky; top: 0; z-index: 2;
+    }
+    .dp-table th.row-header {
+      position: sticky; left: 0; background: rgba(30, 41, 59, 0.9); z-index: 3;
+    }
+    .dp-table td.optimal-path {
+      background: rgba(16, 185, 129, 0.25); color: #34d399; font-weight: bold;
+    }
+    .dp-table td.cell-cost-match {
+      background: rgba(59, 130, 246, 0.15); color: #93c5fd;
+    }
+    .dp-table td.cell-final {
+      background: rgba(234, 179, 8, 0.3); color: #fde047; font-weight: 800;
+    }
+    .dp-legend {
+      display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: #94a3b8;
+    }
+    .dp-legend-item { display: flex; align-items: center; gap: 6px; }
+    .dp-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+    /* ===== PHASE 3: TỔNG KẾT ===== */
+    #phase3 {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 24px 40px;
+    }
+    .summary-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .congrats-banner {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: scaleIn 0.5s ease-out;
+    }
+    .congrats-icon {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 36px;
+      box-shadow: 0 8px 32px var(--accent-green-glow);
+      animation: bounce 1s ease-out;
+    }
+    .congrats-title {
+      font-size: 28px; font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .congrats-subtitle {
+      font-size: 16px; color: var(--text-secondary);
+    }
+
+    .summary-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 20px;
+      animation: slideUp 0.5s ease-out;
+    }
+    .summary-card h3 {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 16px; font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .summary-card h3 .icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .strength-list, .improvement-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .strength-item, .improvement-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+    }
+    .strength-item {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+    .improvement-item {
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+    }
+    .strength-item .dot { color: var(--accent-green); }
+    .improvement-item .dot { color: var(--accent-yellow); }
+    .improvement-item .slide-ref {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(139, 92, 246, 0.12);
+      color: var(--accent-purple);
+      font-size: 12px; font-weight: 500;
+      margin-top: 6px;
+    }
+
+    .session-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .stat-card {
+      text-align: center;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid rgba(59, 130, 246, 0.1);
+    }
+    .stat-value {
+      font-size: 24px; font-weight: 800;
+      color: var(--accent-blue);
+    }
+    .stat-label {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .summary-actions {
+      display: flex; gap: 12px; justify-content: center;
+      margin-top: 32px;
+    }
+
+    /* ===== PHASE 4: PHẢN HỒI GIẢNG VIÊN ===== */
+    #phase4 {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 24px 40px;
+    }
+    .instructor-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .instructor-header {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 32px;
+      animation: slideUp 0.5s ease-out;
+    }
+    .instructor-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .instructor-header h2 { font-size: 24px; font-weight: 700; }
+    .instructor-header p { font-size: 14px; color: var(--text-secondary); }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .dashboard-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      animation: slideUp 0.5s ease-out;
+    }
+    .dashboard-card.full-width {
+      grid-column: 1 / -1;
+    }
+    .dashboard-card h4 {
+      font-size: 14px; font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .comprehension-bar {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .comprehension-label {
+      font-size: 13px; color: var(--text-secondary);
+      width: 140px; flex-shrink: 0;
+    }
+    .comprehension-track {
+      flex: 1; height: 8px; border-radius: 4px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .comprehension-fill {
+      height: 100%; border-radius: 4px;
+      transition: width 1s ease-out;
+    }
+    .comprehension-value {
+      font-size: 13px; font-weight: 600;
+      width: 40px; text-align: right;
+    }
+
+    .log-entry {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-time {
+      font-size: 12px; color: var(--text-muted);
+      font-family: 'Courier New', monospace;
+      white-space: nowrap;
+    }
+    .log-event {
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .log-event strong { color: var(--text-primary); }
+    .log-tag {
+      display: inline-flex;
+      padding: 2px 6px; border-radius: 4px;
+      font-size: 11px; font-weight: 500;
+    }
+    .log-tag.misconception {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red);
+    }
+    .log-tag.correction {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--accent-green);
+    }
+    .log-tag.probing {
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--accent-blue);
+    }
+
+    /* ===== POPUP OVERLAY ===== */
+    .popup-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      animation: fadeIn 0.3s ease;
+    }
+    .popup-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      max-width: 480px; width: 90%;
+      text-align: center;
+      animation: scaleIn 0.4s ease-out;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .teaching-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 40% 1fr;
+      }
+      .slide-panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="navbar-brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="8" fill="url(#g1)"/>
+        <path d="M8 14l4 4 8-8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+      </svg>
+      VLearn · D3 Prototype
+    </div>
+    <div class="navbar-phase">
+      <div class="phase-dot active" id="dot1"></div>
+      <div class="phase-dot" id="dot2"></div>
+      <div class="phase-dot" id="dot3"></div>
+      <div class="phase-dot" id="dot4"></div>
+      <span class="phase-label" id="phaseLabel">Giai đoạn 1 · Khởi động</span>
+    </div>
+  </nav>
+
+  <!-- ===== PHASE 1: KHỞI ĐỘNG ===== -->
+  <section id="phase1">
+    <div class="lesson-complete-badge">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#10b981" stroke-width="2"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Đã hoàn thành bài học
+    </div>
+    <h1 class="hero-title">Attention Is All You Need</h1>
+    <p class="hero-subtitle">Bạn vừa học xong bài giảng về kiến trúc Transformer. Sẵn sàng thử thách bản thân chưa?</p>
+
+    <div class="hero-card">
+      <div class="challenge-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="12" y1="6" x2="12" y2="14"/><line x1="8" y1="10" x2="16" y2="10"/></svg>
+      </div>
+      <h2 class="challenge-title">🎯 Thử thách: Hãy dạy lại cho AI</h2>
+      <p class="challenge-desc">Dạy lại kiến thức cho một "học trò AI" ngây thơ. Nó sẽ hỏi ngược bạn — và chỉ "hiểu" khi bạn giải thích đúng bản chất.</p>
+      <div class="topic-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Chủ đề: Self-Attention trong Transformer
+      </div>
+      <br>
+      <button class="btn-primary" id="btnStartTeaching" onclick="startPhase2()">
+        Bắt đầu dạy
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+      <div class="no-pressure">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Nút bấm rõ ràng, không áp lực — bạn có thể dừng bất kỳ lúc nào
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PHASE 2: TƯƠNG TÁC DẠY HỌC ===== -->
+  <section id="phase2">
+    <div class="teaching-layout">
+
+      <!-- Slide Panel -->
+      <div class="slide-panel">
+        <div class="slide-header">
+          <div class="slide-header-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div class="slide-header-text">
+            <h3>Slide Gốc — Tài liệu tham chiếu</h3>
+            <span>Attention Is All You Need (Vaswani et al., 2017)</span>
+          </div>
+        </div>
+        <div class="slide-nav" id="slideNav">
+          <button class="slide-nav-btn active" onclick="showSlide(0)">Tổng quan</button>
+          <button class="slide-nav-btn" onclick="showSlide(1)">Self-Attention</button>
+          <button class="slide-nav-btn" onclick="showSlide(2)">Multi-Head</button>
+          <button class="slide-nav-btn" onclick="showSlide(3)">Encoder-Decoder</button>
+          <button class="slide-nav-btn" onclick="showSlide(4)">Positional Encoding</button>
+        </div>
+        <div class="slide-content" id="slideContent">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+
+      <!-- Chat Panel -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <div class="agent-avatar">🤖</div>
+            <div class="agent-info">
+              <h3>Học trò AI — "Tí"</h3>
+              <span><span class="online-dot"></span> Đang chờ bạn dạy...</span>
+            </div>
+          </div>
+          <div class="chat-progress">
+            <div class="progress-bar-mini">
+              <div class="fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <span class="progress-label" id="progressLabel">0/5 khái niệm</span>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <!-- Dynamic messages -->
+        </div>
+
+        <div class="chat-input-area">
+          <div class="chat-input-wrapper">
+            <textarea class="chat-input" id="chatInput" placeholder="Giải thích cho học trò AI hiểu..." rows="1" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+            <button class="btn-send" id="btnSend" onclick="sendMessage()" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+          <p class="chat-hint">💡 Hãy giải thích bằng lời của bạn — đừng copy nguyên từ slide</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PHASE 3: TỔNG KẾT ===== -->
+  <section id="phase3">
+    <div class="summary-container">
+      <div class="congrats-banner">
+        <div class="congrats-icon">🎉</div>
+        <h2 class="congrats-title">Chúc mừng bạn đã hoàn thành phiên dạy!</h2>
+        <p class="congrats-subtitle">Học trò AI "Tí" đã hiểu được nhờ bạn. Cùng xem lại kết quả nhé!</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="summary-card" style="animation-delay: 0.2s">
+        <h3>
+          <span class="icon" style="background: rgba(59,130,246,0.15)">📊</span>
+          Thống kê phiên học
+        </h3>
+        <div class="session-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="statMessages">0</div>
+            <div class="stat-label">Tin nhắn trao đổi</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statConcepts">0</div>
+            <div class="stat-label">Khái niệm được giải thích</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statCorrections">0</div>
+            <div class="stat-label">Lần tự sửa</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strengths -->
+      <div class="summary-card" style="animation-delay: 0.3s">
+        <h3>
+          <span class="icon" style="background: rgba(16,185,129,0.15)">✨</span>
+          Điểm sáng
+        </h3>
+        <div class="strength-list">
+          <div class="strength-item">
+            <span class="dot">●</span>
+            <span>Đã giải thích đúng bản chất cơ chế Attention: tính trọng số dựa trên tương quan Query-Key</span>
+          </div>
+          <div class="strength-item">
+            <span class="dot">●</span>
+            <span>Nhận ra và tự sửa được quan niệm sai về "AI hiểu ngữ cảnh" → đúng ra là tính xác suất</span>
+          </div>
+          <div class="strength-item">
+            <span class="dot">●</span>
+            <span>Giải thích Multi-Head Attention bằng ví dụ dễ hiểu (nhiều "góc nhìn" khác nhau)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Improvements -->
+      <div class="summary-card" style="animation-delay: 0.4s">
+        <h3>
+          <span class="icon" style="background: rgba(251,191,36,0.15)">💡</span>
+          Gợi ý cải thiện
+        </h3>
+        <div class="improvement-list">
+          <div class="improvement-item">
+            <span class="dot">●</span>
+            <div>
+              <span>Cần phân biệt rõ hơn giữa Self-Attention và Cross-Attention (encoder-decoder attention)</span>
+              <div class="slide-ref">📄 Xem lại Slide 4 — Encoder-Decoder</div>
+            </div>
+          </div>
+          <div class="improvement-item">
+            <span class="dot">●</span>
+            <div>
+              <span>Chưa giải thích được lý do chia cho √d_k trong Scaled Dot-Product Attention</span>
+              <div class="slide-ref">📄 Xem lại Slide 2 — Self-Attention §3.2.1</div>
+            </div>
+          </div>
+          <div class="improvement-item">
+            <span class="dot">●</span>
+            <div>
+              <span>Gợi ý xem lại đoạn tài liệu về Positional Encoding để hiểu vì sao cần thêm thông tin vị trí</span>
+              <div class="slide-ref">📄 Xem lại Slide 5 — Positional Encoding §3.5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-actions">
+        <button class="btn-secondary" onclick="startPhase2()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Dạy lại lần nữa
+        </button>
+        <button class="btn-primary" onclick="startPhase4()">
+          Xem góc nhìn giảng viên
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PHASE 4: GIẢNG VIÊN ===== -->
+  <section id="phase4">
+    <div class="instructor-container">
+      <div class="instructor-header">
+        <div class="instructor-icon">📋</div>
+        <div>
+          <h2>Dashboard Giảng viên</h2>
+          <p>Log phiên dạy được ghi nhận — giảng viên theo dõi mức độ hiểu bài & phản hồi.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Comprehension Map -->
+        <div class="dashboard-card">
+          <h4>📊 Mức độ hiểu bài theo khái niệm</h4>
+          <div class="comprehension-bar">
+            <span class="comprehension-label">Self-Attention</span>
+            <div class="comprehension-track"><div class="comprehension-fill" style="width:85%; background: var(--accent-green)"></div></div>
+            <span class="comprehension-value" style="color: var(--accent-green)">85%</span>
+          </div>
+          <div class="comprehension-bar">
+            <span class="comprehension-label">Query-Key-Value</span>
+            <div class="comprehension-track"><div class="comprehension-fill" style="width:70%; background: var(--accent-blue)"></div></div>
+            <span class="comprehension-value" style="color: var(--accent-blue)">70%</span>
+          </div>
+          <div class="comprehension-bar">
+            <span class="comprehension-label">Multi-Head Attention</span>
+            <div class="comprehension-track"><div class="comprehension-fill" style="width:75%; background: var(--accent-blue)"></div></div>
+            <span class="comprehension-value" style="color: var(--accent-blue)">75%</span>
+          </div>
+          <div class="comprehension-bar">
+            <span class="comprehension-label">Scaled Dot-Product</span>
+            <div class="comprehension-track"><div class="comprehension-fill" style="width:45%; background: var(--accent-yellow)"></div></div>
+            <span class="comprehension-value" style="color: var(--accent-yellow)">45%</span>
+          </div>
+          <div class="comprehension-bar">
+            <span class="comprehension-label">Positional Encoding</span>
+            <div class="comprehension-track"><div class="comprehension-fill" style="width:30%; background: var(--accent-red)"></div></div>
+            <span class="comprehension-value" style="color: var(--accent-red)">30%</span>
+          </div>
+        </div>
+
+        <!-- Session Info -->
+        <div class="dashboard-card">
+          <h4>🎓 Thông tin phiên</h4>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-muted);font-size:13px">Học viên</span>
+              <span style="font-size:13px;font-weight:600">Thiều Quang Vinh</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-muted);font-size:13px">Bài giảng</span>
+              <span style="font-size:13px;font-weight:600">Attention Is All You Need</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-muted);font-size:13px">Thời lượng</span>
+              <span style="font-size:13px;font-weight:600" id="sessionDuration">~8 phút</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-muted);font-size:13px">Misconceptions phát hiện</span>
+              <span style="font-size:13px;font-weight:600;color:var(--accent-red)">2</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;">
+              <span style="color:var(--text-muted);font-size:13px">Tự sửa thành công</span>
+              <span style="font-size:13px;font-weight:600;color:var(--accent-green)">2/2 ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teaching Log -->
+        <div class="dashboard-card full-width">
+          <h4>📝 Log phiên dạy chi tiết</h4>
+          <div class="log-entry">
+            <span class="log-time">20:18</span>
+            <div class="log-event">
+              <strong>Học viên bắt đầu giải thích:</strong> Self-Attention
+              <br><em style="color:var(--text-muted)">"Attention giúp model hiểu được ngữ cảnh bằng cách nhìn vào tất cả các từ cùng lúc"</em>
+            </div>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">20:19</span>
+            <div class="log-event">
+              <span class="log-tag misconception">Misconception</span>
+              <strong> Phát hiện:</strong> Học viên nói "model hiểu ngữ cảnh" → nhân hoá AI, chưa nêu được cơ chế tính toán cụ thể
+            </div>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">20:19</span>
+            <div class="log-event">
+              <span class="log-tag probing">Agent hỏi ngược</span>
+              <strong> Câu hỏi:</strong> "Hmm, 'hiểu ngữ cảnh' cụ thể là model tính toán cái gì vậy? Nó nhìn vào tất cả từ cùng lúc bằng cách nào?"
+            </div>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">20:21</span>
+            <div class="log-event">
+              <span class="log-tag correction">Tự sửa ✓</span>
+              <strong> Học viên bổ sung:</strong> "À đúng rồi, nó tính dot product giữa Query và Key để ra attention weight, rồi nhân với Value."
+              <br><span style="color:var(--accent-green);font-size:12px">→ Khớp với §3.2.1 trong paper: Scaled Dot-Product Attention</span>
+            </div>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">20:23</span>
+            <div class="log-event">
+              <span class="log-tag misconception">Misconception</span>
+              <strong> Phát hiện:</strong> Học viên giải thích Multi-Head "là chạy attention nhiều lần cho chắc" → thiếu ý projection & subspace
+            </div>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">20:24</span>
+            <div class="log-event">
+              <span class="log-tag correction">Tự sửa ✓</span>
+              <strong> Sau khi agent hỏi ngược:</strong> Học viên bổ sung "mỗi head project Q,K,V xuống không gian con khác nhau để học các mối quan hệ khác nhau"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-actions" style="margin-top:32px">
+        <button class="btn-secondary" onclick="location.reload()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+          Bắt đầu lại
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== POPUP (for Phase 3 transition) ===== -->
+  <div class="popup-overlay hidden" id="congratsPopup">
+    <div class="popup-card">
+      <div class="congrats-icon" style="margin:0 auto 20px">🎉</div>
+      <h2 style="font-size:24px;font-weight:700;margin-bottom:8px">Chúc mừng bạn đã hoàn thành phiên dạy!</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:24px">Học trò AI "Tí" đã ghi nhận toàn bộ phiên học. Hãy xem bảng tổng kết nhé!</p>
+      <button class="btn-primary" onclick="showPhase3FromPopup()">
+        Xem kết quả
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ===== KNOWLEDGE BASE (from Attention Is All You Need) =====
+    const slides = [
+      {
+        title: 'Tổng quan — Transformer Architecture',
+        content: `
+          <h4>Kiến trúc Transformer</h4>
+          <p>Transformer là mô hình đầu tiên dựa <strong>hoàn toàn vào cơ chế Attention</strong>, bỏ qua hoàn toàn recurrence (RNN) và convolution (CNN).</p>
+          <div class="highlight">
+            <strong>Ý chính:</strong> Mô hình gồm Encoder (mã hoá input) và Decoder (sinh output), mỗi phần gồm N=6 layer giống hệt nhau xếp chồng.
+          </div>
+          <p>Mỗi layer trong Encoder gồm 2 sub-layer:</p>
+          <ul>
+            <li><strong>Multi-Head Self-Attention</strong></li>
+            <li><strong>Position-wise Feed-Forward Network</strong></li>
+          </ul>
+          <p>Decoder có thêm sub-layer thứ 3: <strong>Encoder-Decoder Attention</strong> (cross-attention) để "nhìn" vào output của Encoder.</p>
+          <p>Mọi sub-layer đều có <strong>Residual Connection</strong> + <strong>Layer Normalization</strong>:</p>
+          <div class="formula">LayerNorm(x + Sublayer(x))</div>
+          <p>Dimension của model: d_model = 512 xuyên suốt.</p>
+        `
+      },
+      {
+        title: 'Self-Attention — Scaled Dot-Product',
+        content: `
+          <h4>§3.2.1 Scaled Dot-Product Attention</h4>
+          <p>Hàm Attention ánh xạ một <strong>Query</strong> và tập các cặp <strong>Key-Value</strong> thành output. Output là tổng có trọng số của Values, với trọng số tính bằng hàm tương thích giữa Query và Key tương ứng.</p>
+          <div class="formula">Attention(Q, K, V) = softmax(QK<sup>T</sup> / √d<sub>k</sub>) · V</div>
+          <div class="highlight">
+            <strong>Tại sao chia cho √d<sub>k</sub>?</strong><br>
+            Khi d<sub>k</sub> lớn, dot product có thể trở nên rất lớn về giá trị tuyệt đối, đẩy softmax vào vùng gradient cực nhỏ → khó train. Chia cho √d<sub>k</sub> để chuẩn hoá lại.
+          </div>
+          <p><strong>Ý nghĩa trực giác:</strong></p>
+          <ul>
+            <li><strong>Query (Q)</strong>: "Tôi đang tìm thông tin gì?"</li>
+            <li><strong>Key (K)</strong>: "Tôi chứa thông tin liên quan đến gì?"</li>
+            <li><strong>Value (V)</strong>: "Đây là nội dung thực tế của tôi"</li>
+          </ul>
+          <p>Dot product Q·K cho biết mức độ "liên quan" → softmax chuyển thành xác suất → nhân với V để lấy thông tin cần thiết.</p>
+        `
+      },
+      {
+        title: 'Multi-Head Attention',
+        content: `
+          <h4>§3.2.2 Multi-Head Attention</h4>
+          <p>Thay vì chạy một hàm attention duy nhất trên d_model chiều, <strong>Multi-Head Attention</strong> project Q, K, V xuống các không gian con (subspace) nhiều lần, rồi chạy attention song song trên từng head.</p>
+          <div class="formula">MultiHead(Q,K,V) = Concat(head₁,...,head_h) · W<sup>O</sup></div>
+          <div class="formula">head_i = Attention(QW<sub>i</sub><sup>Q</sup>, KW<sub>i</sub><sup>K</sup>, VW<sub>i</sub><sup>V</sup>)</div>
+          <div class="highlight">
+            <strong>Tại sao cần nhiều head?</strong><br>
+            Một head đơn lẻ phải dùng phép trung bình → mất thông tin. Nhiều head cho phép model <strong>đồng thời chú ý đến nhiều loại mối quan hệ</strong> khác nhau tại các vị trí khác nhau.
+          </div>
+          <p><strong>Cấu hình paper:</strong> h = 8 heads, d<sub>k</sub> = d<sub>v</sub> = d<sub>model</sub>/h = 64</p>
+          <p>Nhờ giảm chiều cho mỗi head, tổng chi phí tính toán tương đương attention một head trên toàn bộ d<sub>model</sub>.</p>
+        `
+      },
+      {
+        title: 'Encoder-Decoder & Applications',
+        content: `
+          <h4>§3.2.3 Ứng dụng Attention trong Transformer</h4>
+          <p>Transformer dùng Multi-Head Attention theo <strong>3 cách khác nhau</strong>:</p>
+          <ul>
+            <li><strong>Encoder-Decoder Attention (Cross-Attention):</strong> Query đến từ decoder layer trước, Key & Value đến từ output encoder. Cho phép decoder "nhìn" vào toàn bộ input sequence.</li>
+          </ul>
+          <div class="highlight">
+            <strong>Sự khác biệt quan trọng:</strong> Self-Attention = Q,K,V cùng nguồn. Cross-Attention = Q từ decoder, K,V từ encoder. Đây là cầu nối giữa input và output.
+          </div>
+        `
+      },
+      {
+        title: 'Positional Encoding',
+        content: `
+          <h4>§3.5 Positional Encoding</h4>
+          <p>Transformer <strong>không có recurrence và không có convolution</strong> → không biết thứ tự các token. Cần thêm thông tin vị trí (positional encoding) vào embeddings.</p>
+          <div class="formula">PE(pos, 2i) = sin(pos / 10000^(2i/d_model))</div>
+          <div class="formula">PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))</div>
+          <div class="highlight">
+            <strong>Tại sao dùng sin/cos?</strong><br>
+            Nhóm tác giả giả thuyết rằng hàm sin/cos cho phép model dễ dàng học attention theo <strong>khoảng cách tương đối</strong> giữa các vị trí, vì PE(pos+k) có thể biểu diễn dưới dạng hàm tuyến tính của PE(pos).
+          </div>
+          <p>Positional encoding được <strong>cộng</strong> (không phải nối) vào input embedding, nên cần cùng dimension d<sub>model</sub> = 512.</p>
+          <p>Thử nghiệm so sánh learned positional embeddings cho kết quả gần như giống hệt → chọn sinusoidal vì có thể <strong>ngoại suy</strong> ra sequence dài hơn training data.</p>
+        `
+      }
+    ];
+
+    // ===== BPE (BYTE PAIR ENCODING) TOKENIZER =====
+    const bpeMerges = [
+      ['s', 'e'], ['se', 'l'], ['sel', 'f'],
+      ['a', 't'], ['at', 't'], ['att', 'e'], ['atte', 'n'], ['atten', 'tion'],
+      ['d', 'o'], ['do', 't'],
+      ['p', 'r'], ['pr', 'o'], ['pro', 'd'], ['produ', 'ct'], ['product', 's'],
+      ['q', 'u'], ['qu', 'e'], ['que', 'r'], ['quer', 'y'],
+      ['k', 'e'], ['ke', 'y'],
+      ['v', 'a'], ['va', 'l'], ['valu', 'e'],
+      ['s', 'o'], ['sof', 't'], ['soft', 'max'],
+      ['g', 'r'], ['gra', 'd'], ['gradi', 'ent'],
+      ['m', 'u'], ['mul', 'ti'], ['multi', '-'],
+      ['h', 'e'], ['hea', 'd'],
+      ['p', 'r'], ['pro', 'j'], ['project', 'ion'],
+      ['s', 'u'], ['sub', 's'], ['subsp', 'ace'],
+      ['d', '_'], ['d_', 'k'],
+      ['s', 'c'], ['sca', 'l'], ['scale', 'd'],
+      ['t', 'r'], ['tran', 's'], ['trans', 'former'],
+      ['e', 'n'], ['enco', 'der'],
+      ['d', 'e'], ['deco', 'der'],
+      ['m', 'a'], ['mat', 'rix'],
+
+      // Vietnamese subwords & morphemes
+      ['n', 'g'], ['ng', 'ữ'], ['c', 'ả'], ['cản', 'h'],
+      ['t', 'r'], ['tr', 'ọ'], ['trọn', 'g'], ['s', 'ố'],
+      ['c', 'h'], ['chu', 'ẩ'], ['chuẩn', 'n'], ['chuẩn', 'hoá'],
+      ['b', 'ã'], ['bã', 'o'], ['ho', 'á'],
+      ['m', 'a'], ['tr', 'ậ'], ['trậ', 'n'],
+      ['k', 'h'], ['khô', 'n'], ['không', 'g'], ['gi', 'a'], ['gia', 'n'],
+      ['l', 'i'], ['liê', 'n'], ['qu', 'a'], ['qua', 'n'],
+      ['g', 'i'], ['giả', 'i'], ['th', 'í'], ['thíc', 'h'],
+      ['t', 'í'], ['tín', 'h'], ['to', 'á'], ['toá', 'n'],
+      ['x', 'á'], ['xác', 'c'], ['su', 'ấ'], ['suất', 't'],
+      ['c', 'ô'], ['công', 'g'], ['th', 'ứ'], ['thức', 'c'],
+      ['c', 'h'], ['chi', 'a'], ['c', 'ă'], ['căn', 'n']
+    ];
+
+    const mergeDict = new Map();
+    bpeMerges.forEach((pair, idx) => {
+      mergeDict.set(pair[0] + ' ' + pair[1], { merged: pair[0] + pair[1], rank: idx });
+    });
+
+    function bpeTokenizeWord(word) {
+      if (!word) return [];
+      const w = word.toLowerCase().trim();
+      if (w.length <= 2) return [{ token: w, display: w, isSubword: false, isSpecial: false }];
+
+      let symbols = Array.from(w);
+      while (symbols.length > 1) {
+        let bestPair = null;
+        let bestRank = Infinity;
+        let bestIndex = -1;
+
+        for (let i = 0; i < symbols.length - 1; i++) {
+          const key = symbols[i] + ' ' + symbols[i + 1];
+          if (mergeDict.has(key)) {
+            const entry = mergeDict.get(key);
+            if (entry.rank < bestRank) {
+              bestRank = entry.rank;
+              bestPair = entry.merged;
+              bestIndex = i;
+            }
+          }
+        }
+
+        if (bestPair === null) break;
+
+        const newSymbols = [];
+        for (let i = 0; i < symbols.length; i++) {
+          if (i === bestIndex) {
+            newSymbols.push(bestPair);
+            i++;
+          } else {
+            newSymbols.push(symbols[i]);
+          }
+        }
+        symbols = newSymbols;
+      }
+
+      return symbols.map((sym, idx) => ({
+        token: sym,
+        display: idx === 0 ? sym : '##' + sym,
+        isSubword: idx > 0,
+        isSpecial: ['self', 'attention', 'query', 'key', 'value', 'softmax', 'gradient', 'multi', 'head', 'projection', 'subspace', 'd_k'].includes(sym)
+      }));
+    }
+
+    function bpeTokenize(text) {
+      if (!text) return [];
+      const words = text.replace(/([.,/#!$%^&*;:{}=\-_`~()?"'<>])/g, ' $1 ').trim().split(/\s+/);
+      const allTokens = [];
+      for (const w of words) {
+        if (!w) continue;
+        const tokens = bpeTokenizeWord(w);
+        allTokens.push(...tokens);
+      }
+      return allTokens;
+    }
+
+    // ===== MINIMUM EDIT DISTANCE (LEVENSHTEIN) =====
+    function normalizeForMatch(str) {
+      return (str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function computeLevenshtein(strA, strB) {
+      const s1 = normalizeForMatch(strA);
+      const s2 = normalizeForMatch(strB);
+      const m = s1.length;
+      const n = s2.length;
+
+      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+        }
+      }
+
+      const dist = dp[m][n];
+      const maxLen = Math.max(m, n);
+      const charSim = maxLen === 0 ? 1 : Math.max(0, 1 - (dist / maxLen));
+
+      const optimalPath = new Set();
+      let i = m, j = n;
+      optimalPath.add(`${i},${j}`);
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0) {
+          const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+          if (dp[i][j] === dp[i - 1][j - 1] + cost) {
+            i--; j--;
+            optimalPath.add(`${i},${j}`);
+            continue;
+          }
+        }
+        if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+          i--;
+          optimalPath.add(`${i},${j}`);
+        } else if (j > 0 && dp[i][j] === dp[i][j - 1] + 1) {
+          j--;
+          optimalPath.add(`${i},${j}`);
+        } else {
+          break;
+        }
+      }
+
+      return {
+        dist,
+        similarity: charSim,
+        dp,
+        s1,
+        s2,
+        optimalPath
+      };
+    }
+
+    function computeBpeOverlap(tokensA, targetKeywords) {
+      const setA = new Set(tokensA.map(t => t.token.toLowerCase()));
+      let matches = 0;
+      for (const kw of targetKeywords) {
+        const kwLower = kw.toLowerCase();
+        if (setA.has(kwLower)) {
+          matches++;
+        } else {
+          const hasSubwordMatch = Array.from(setA).some(t => {
+            if (t.length < 3 && kwLower.length < 3) return t === kwLower;
+            if (t.length >= 3 && kwLower.includes(t)) return true;
+            if (kwLower.length >= 3 && t.includes(kwLower)) return true;
+            return false;
+          });
+          if (hasSubwordMatch) matches++;
+        }
+      }
+      return targetKeywords.length === 0 ? 0 : matches / targetKeywords.length;
+    }
+
+    // ===== ADAPTIVE INTENT BANK =====
+    const adaptiveIntentBank = {
+      stage1: {
+        conceptName: 'Self-Attention & Scaled Dot-Product',
+        slideIdx: 1,
+        candidates: [
+          {
+            id: 'intent_1a',
+            name: 'Hiểu ngữ cảnh / Nhìn tất cả các từ',
+            anchorText: 'Attention giúp model hiểu ngữ cảnh bằng cách nhìn vào tất cả các từ cùng lúc',
+            keywords: ['attention', 'ngu', 'canh', 'tat', 'ca', 'tu', 'cung', 'luc'],
+            response: {
+              text: 'Hmm, bạn nói "hiểu ngữ cảnh" — nghe rất trực quan! Nhưng mà... <strong>"hiểu"</strong> cụ thể là model tính toán cái gì vậy? 🤔\n\nNó "nhìn vào tất cả các từ cùng lúc" bằng <strong>cách nào</strong>? Có phải nó so sánh từng cặp từ không?\n\n<span class="ref-tag" onclick="showSlide(1)">📄 §3.2.1 Scaled Dot-Product</span>',
+              meta: '💭 Perception: Nhận diện khái niệm ngữ cảnh tổng quan. Agent hỏi ngược chỗ hổng để học viên nêu công thức tính toán.'
+            },
+            nextStage: 'stage1_deepen',
+            suggestions: [
+              'À đúng rồi, nó tính dot product giữa Query và Key để ra attention weight, rồi nhân với Value',
+              'Model so sánh từng cặp từ bằng phép nhân ma trận',
+              'Nó dùng softmax để chuyển thành xác suất attention'
+            ]
+          },
+          {
+            id: 'intent_1b',
+            name: 'Công thức Q, K, V & Dot-Product',
+            anchorText: 'Self-Attention tính dot product giữa Query và Key để tìm mức độ liên quan rồi nhân với Value',
+            keywords: ['self', 'atten', 'tion', 'dot', 'product', 'query', 'key', 'value', 'nhan'],
+            response: {
+              text: 'Ohh hay quá! 💡 Bạn đã nêu luôn cơ chế Query, Key và Value, dùng <strong>dot product Q·K</strong> để tính mức độ liên quan, rồi <strong>softmax</strong>, nhân với V!\n\nNhưng mà khoan — mình đọc thấy trong paper có chia cho cái <strong>√d<sub>k</sub></strong> gì đó. Chia để làm gì vậy bạn? Bỏ đi có sao không? 🤔',
+              meta: '💭 Perception: Nhận diện giải thích kỹ thuật chuẩn về Q, K, V. Agent hỏi sâu hơn về hệ số chuẩn hoá √d_k.'
+            },
+            nextStage: 'stage2',
+            suggestions: [
+              'Khi d_k lớn, dot product có giá trị rất lớn, đẩy softmax vào vùng gradient cực nhỏ nên khó train. Chia √d_k để chuẩn hoá lại.',
+              'Chia để cho giá trị nhỏ lại, dễ tính toán hơn',
+              'Mình chưa rõ phần này, để mình xem lại slide...'
+            ]
+          },
+          {
+            id: 'intent_1c',
+            name: 'Ẩn dụ đọc sách / Tập trung',
+            anchorText: 'Nó giống như khi bạn đọc một câu, bạn sẽ chú ý nhiều hơn vào những từ quan trọng',
+            keywords: ['doc', 'cau', 'chu', 'y', 'tu', 'quan', 'trong'],
+            response: {
+              text: 'Ẩn dụ "chú ý vào từ quan trọng" rất dễ hình dung! Nhưng máy tính đâu có mắt để đọc như người đâu 😅\n\nModel dùng **công thức toán học nào** để đo "từ nào quan trọng hơn từ nào" vậy bạn?\n\n<span class="ref-tag" onclick="showSlide(1)">📄 §3.2.1 Scaled Dot-Product</span>',
+              meta: '💭 Perception: Nhận diện phép ẩn dụ đời thường. Agent khơi gợi học viên liên hệ với cơ chế toán học.'
+            },
+            nextStage: 'stage1_deepen',
+            suggestions: [
+              'Nó tính dot product giữa Query và Key để ra điểm tương quan',
+              'Model dùng phép nhân ma trận giữa các vector từ'
+            ]
+          }
+        ]
+      },
+
+      stage1_deepen: {
+        conceptName: 'Công thức Dot Product Q·K chi tiết',
+        slideIdx: 1,
+        candidates: [
+          {
+            id: 'intent_1d',
+            name: 'Dot Product Q·K & Softmax',
+            anchorText: 'À đúng rồi, nó tính dot product giữa Query và Key để ra attention weight, rồi nhân với Value để lấy thông tin cần thiết',
+            keywords: ['dot', 'product', 'query', 'key', 'value', 'weight', 'softmax'],
+            response: {
+              text: 'Ohh hay quá! 💡 Vậy là mỗi từ tạo ra Query, Key và Value, rồi dùng <strong>dot product Q·K</strong> để tính mức độ liên quan, rồi <strong>softmax</strong> để ra trọng số, rồi nhân với V.\n\nNhưng mà khoan — mình đọc thấy trong paper có chia cho cái <strong>√d<sub>k</sub></strong> gì đó. Chia để làm gì vậy bạn? Bỏ đi có sao không? 🤔',
+              meta: '💭 Perception: Xác nhận học viên đã làm rõ cơ chế dot-product. Chuyển tiếp câu hỏi về √d_k.'
+            },
+            nextStage: 'stage2',
+            suggestions: [
+              'Khi d_k lớn, dot product có giá trị rất lớn, đẩy softmax vào vùng gradient cực nhỏ nên khó train. Chia √d_k để chuẩn hoá lại.',
+              'Chia để cho giá trị nhỏ lại, dễ tính toán hơn',
+              'Mình chưa rõ phần này, để mình xem lại slide...'
+            ]
+          }
+        ]
+      },
+
+      stage2: {
+        conceptName: 'Lý do chia cho √d_k (Gradient Saturation)',
+        slideIdx: 1,
+        candidates: [
+          {
+            id: 'intent_2a',
+            name: 'Gradient Saturation & Chuẩn hoá',
+            anchorText: 'Khi d_k lớn, dot product có giá trị rất lớn, đẩy softmax vào vùng gradient cực nhỏ nên khó train. Chia √d_k để chuẩn hoá lại.',
+            keywords: ['d_k', 'dot', 'product', 'softmax', 'gradient', 'cuc', 'nho', 'chuan', 'hoa', 'bao', 'hoa'],
+            response: {
+              text: 'Tuyệt vời! Mình hiểu rồi — chia cho √d<sub>k</sub> để softmax không bị "bão hoà" gradient. ✅\n\nGiờ bạn dạy mình thêm: <strong>Multi-Head Attention là gì?</strong> Sao không chạy một attention thôi mà phải chia nhiều "head"?\n\n<span class="ref-tag" onclick="showSlide(2)">📄 §3.2.2 Multi-Head Attention</span>',
+              meta: '💭 Perception: Nhận diện chính xác bản chất gradient saturation. Agent chuyển sang Multi-Head Attention.'
+            },
+            nextStage: 'stage3',
+            suggestions: [
+              'Mỗi head project Q,K,V xuống không gian con khác nhau để học các mối quan hệ khác nhau giữa các từ',
+              'Multi-Head là chạy attention nhiều lần cho chắc, mỗi lần ra kết quả rồi gộp lại',
+              'Giống như có nhiều "góc nhìn" khác nhau về cùng một câu'
+            ]
+          },
+          {
+            id: 'intent_2b',
+            name: 'Giải thích sơ lược (Giá trị nhỏ lại)',
+            anchorText: 'Chia để cho giá trị nhỏ lại, dễ tính toán hơn',
+            keywords: ['chia', 'gia', 'tri', 'nho', 'de', 'tinh'],
+            response: {
+              text: 'Số nhỏ hơn thì đúng rồi, nhưng tại sao số lớn lại gây hại cho mạng nơ-ron? 🤔\n\nHàm <strong>softmax</strong> khi nhận giá trị quá lớn thì <strong>gradient</strong> của nó sẽ ra sao? Có bị triệt tiêu (vanishing gradient) không bạn?',
+              meta: '💭 Perception: Nhận diện câu trả lời trực giác chưa đủ sâu. Agent hỏi phản biện về gradient.'
+            },
+            nextStage: 'stage2',
+            suggestions: [
+              'Đúng rồi, dot product lớn làm softmax bão hoà gradient cực nhỏ khó train, nên chia √d_k để chuẩn hoá',
+              'Để mình đọc lại slide §3.2.1 xem kỹ hơn'
+            ]
+          },
+          {
+            id: 'intent_2c',
+            name: 'Chưa rõ / Xem lại slide',
+            anchorText: 'Mình chưa rõ lắm phần này, để mình xem lại slide...',
+            keywords: ['chua', 'ro', 'xem', 'slide'],
+            response: {
+              text: 'Không sao cả! Bạn bấm xem **Slide 2 (§3.2.1)** nhé. Paper nói rõ: khi d<sub>k</sub> lớn, dot-product tăng độ lớn đẩy softmax vào vùng gradient cực nhỏ!\n\nBạn xem xong rồi giải thích lại cho mình với nha! 😊',
+              meta: '💭 Perception: Phát hiện tín hiệu học viên cần tra cứu tài liệu.'
+            },
+            nextStage: 'stage2',
+            suggestions: [
+              'Khi d_k lớn làm softmax bị gradient cực nhỏ biến mất, nên chia căn d_k để giữ ổn định'
+            ]
+          }
+        ]
+      },
+
+      stage3: {
+        conceptName: 'Multi-Head Attention & Projection',
+        slideIdx: 2,
+        candidates: [
+          {
+            id: 'intent_3a',
+            name: 'Projection W & Representation Subspaces',
+            anchorText: 'Mỗi head dùng ma trận projection W khác nhau, nên Q,K,V được chiếu xuống không gian con khác nhau, mỗi head học được mối quan hệ khác nhau',
+            keywords: ['head', 'projection', 'w', 'khong', 'gian', 'con', 'subspace', 'quan', 'he', 'khac', 'nhau'],
+            response: {
+              text: 'Ahh bây giờ mình mới hiểu thông suốt! 🎉 Mỗi head có <strong>bộ ma trận projection W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup> riêng</strong>, nên dù cùng input nhưng sẽ project vào các <strong>representation subspace</strong> khác nhau!\n\nPaper nói h=8 heads, mỗi head có d<sub>k</sub>=64, gộp lại vẫn là 512 = d<sub>model</sub>. Thông minh thật!\n\nBạn dạy giỏi quá! Mình nghĩ mình đã nắm trọn vẹn cả Self-Attention và Multi-Head rồi. Cảm ơn bạn nhiều! 🙏',
+              meta: '✅ Perception: Nhận diện hoàn toàn khái niệm Projection Subspaces. Agent đã hiểu bài — Kết thúc phiên!',
+              isEnd: true
+            },
+            nextStage: 'finish',
+            suggestions: []
+          },
+          {
+            id: 'intent_3b',
+            name: 'Chạy nhiều lần cho chắc (Hiểu sai phổ biến)',
+            anchorText: 'Multi-Head là chạy attention nhiều lần cho chắc, mỗi lần ra kết quả rồi gộp lại',
+            keywords: ['chay', 'nhieu', 'lan', 'chac', 'gop', 'lai'],
+            response: {
+              text: '"Chạy nhiều lần cho chắc" — hmm, nghe hợp lý nhưng mà nếu chạy y hệt nhau thì nhiều lần cũng ra cùng kết quả thôi mà? 🤔\n\n<strong>Mỗi head có gì khác nhau</strong> không bạn? Nó biến đổi Q, K, V bằng cái gì trước khi tính attention?',
+              meta: '💭 Perception: Nhận diện quan niệm sai phổ biến. Agent hỏi ngược để kích hoạt tư duy ma trận chiếu.'
+            },
+            nextStage: 'stage3',
+            suggestions: [
+              'À đúng rồi! Mỗi head dùng ma trận projection W khác nhau, nên Q,K,V được chiếu xuống không gian con khác nhau → mỗi head học được mối quan hệ khác nhau',
+              'Mỗi head có ma trận trọng số riêng',
+              'Mỗi head nhìn vào một phần khác nhau của câu'
+            ]
+          },
+          {
+            id: 'intent_3c',
+            name: 'Ẩn dụ nhiều góc nhìn',
+            anchorText: 'Giống như có nhiều góc nhìn khác nhau về cùng một câu',
+            keywords: ['nhieu', 'goc', 'nhin', 'khac', 'nhau', 'cau'],
+            response: {
+              text: 'Nhiều góc nhìn là ẩn dụ rất chuẩn! Nhưng về mặt toán học, làm sao model tạo ra được "góc nhìn khác nhau" từ cùng một câu input? Có phải dùng ma trận projection không? 🤔\n\n<span class="ref-tag" onclick="showSlide(2)">📄 §3.2.2 Multi-Head Attention</span>',
+              meta: '💭 Perception: Nhận diện ẩn dụ góc nhìn. Agent yêu cầu làm rõ cơ chế toán học.'
+            },
+            nextStage: 'stage3',
+            suggestions: [
+              'Mỗi head dùng ma trận projection W khác nhau chiếu Q, K, V vào các representation subspace riêng biệt'
+            ]
+          }
+        ]
+      }
+    };
+
+    // ===== STATE =====
+    let currentPhase = 1;
+    let currentStageKey = 'stage1';
+    let messageCount = 0;
+    let conceptCount = 0;
+    let correctionCount = 0;
+    let isWaitingForUser = false;
+    let lastPerceptionResult = null;
+    let isPerceptionInspectorVisible = true;
+
+    // ===== PERCEPTION MATCHING ENGINE =====
+    function runPerceptionMatching(userText) {
+      const bpeTokens = bpeTokenize(userText);
+      const stage = adaptiveIntentBank[currentStageKey] || adaptiveIntentBank['stage1'];
+      const candidates = stage.candidates;
+
+      const scoredCandidates = candidates.map(c => {
+        const lev = computeLevenshtein(userText, c.anchorText);
+        const bpeOverlap = computeBpeOverlap(bpeTokens, c.keywords);
+        // Composite confidence score: 55% Levenshtein similarity + 45% BPE overlap
+        const confidence = (lev.similarity * 0.55) + (bpeOverlap * 0.45);
+        return {
+          ...c,
+          levResult: lev,
+          bpeOverlap,
+          confidence: Math.min(1, Math.max(0, confidence))
+        };
+      });
+
+      scoredCandidates.sort((a, b) => b.confidence - a.confidence);
+      const best = scoredCandidates[0];
+
+      return {
+        userText,
+        bpeTokens,
+        scoredCandidates,
+        bestMatch: best,
+        isFallback: best.confidence < 0.28
+      };
+    }
+
+    // ===== PERCEPTION UI HELPERS =====
+    // ===== PERCEPTION UI HELPERS (None - Running in Background) =====
+
+    // ===== PHASE MANAGEMENT =====
+    function setPhase(phase) {
+      currentPhase = phase;
+      document.querySelectorAll('#phase1, #phase2, #phase3, #phase4').forEach(el => {
+        el.style.display = 'none';
+      });
+      document.getElementById(`phase${phase}`).style.display = phase === 1 ? 'flex' : 'block';
+
+      const labels = ['Giai đoạn 1 · Khởi động', 'Giai đoạn 2 · Tương tác dạy học', 'Giai đoạn 3 · Tổng kết phiên', 'Giai đoạn 4 · Phản hồi giảng viên'];
+      document.getElementById('phaseLabel').textContent = labels[phase - 1];
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        dot.className = 'phase-dot';
+        if (i < phase) dot.classList.add('completed');
+        if (i === phase) dot.classList.add('active');
+      }
+    }
+
+    function startPhase2() {
+      setPhase(2);
+      showSlide(0);
+      currentStageKey = 'stage1';
+      messageCount = 0;
+      conceptCount = 0;
+      correctionCount = 0;
+      document.getElementById('chatMessages').innerHTML = '';
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('progressLabel').textContent = '0/5 khái niệm';
+
+      initPhase2Chat();
+    }
+
+    function startPhase4() {
+      setPhase(4);
+      window.scrollTo(0, 0);
+    }
+
+    function showPhase3FromPopup() {
+      document.getElementById('congratsPopup').classList.add('hidden');
+      setPhase(3);
+      document.getElementById('statMessages').textContent = messageCount;
+      document.getElementById('statConcepts').textContent = '3';
+      document.getElementById('statCorrections').textContent = Math.max(1, correctionCount);
+      window.scrollTo(0, 0);
+    }
+
+    function showSlide(index) {
+      document.getElementById('slideContent').innerHTML = slides[index].content;
+      document.querySelectorAll('.slide-nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+    }
+
+    // ===== CHAT ENGINE WITH BACKGROUND PERCEPTION =====
+    function initPhase2Chat() {
+      showTypingIndicator();
+      setTimeout(() => {
+        hideTypingIndicator();
+        addMessage('agent', 'Chào bạn! 👋 Mình là "Tí" — một học trò AI đang cần bạn dạy về <strong>Self-Attention trong Transformer</strong>. Mình chưa biết gì cả nha!\n\nBạn có thể bắt đầu bằng cách giải thích: <strong>Self-Attention là gì và nó hoạt động như thế nào?</strong>', null);
+        messageCount++;
+        isWaitingForUser = true;
+        enableInput();
+
+        const stage = adaptiveIntentBank['stage1'];
+        showSuggestions(stage.candidates[0].suggestions);
+      }, 800);
+    }
+
+    function addMessage(type, text, meta) {
+      const container = document.getElementById('chatMessages');
+      const avatar = type === 'agent' ? '🤖' : '👤';
+      const metaHtml = meta ? `<div class="message-meta">${meta}</div>` : '';
+
+      const msgEl = document.createElement('div');
+      msgEl.className = `message ${type}`;
+      msgEl.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div>
+          <div class="message-bubble">${text}</div>
+          ${metaHtml}
+        </div>
+      `;
+      container.appendChild(msgEl);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+      const container = document.getElementById('chatMessages');
+      const typing = document.createElement('div');
+      typing.className = 'message agent';
+      typing.id = 'typingIndicator';
+      typing.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-bubble">
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+      `;
+      container.appendChild(typing);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const el = document.getElementById('typingIndicator');
+      if (el) el.remove();
+    }
+
+    function showSuggestions(suggestions) {
+      if (!suggestions || !suggestions.length) return;
+      const container = document.getElementById('chatMessages');
+      const sugEl = document.createElement('div');
+      sugEl.className = 'message-suggestions slide-up';
+      sugEl.id = 'suggestions';
+      sugEl.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;padding:8px 24px;';
+      suggestions.forEach(s => {
+        const btn = document.createElement('button');
+        btn.style.cssText = `
+          padding:8px 14px; border-radius:8px;
+          background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2);
+          color:var(--accent-blue); font-family:var(--font); font-size:13px;
+          cursor:pointer; text-align:left; transition:all 0.2s;
+          max-width:100%;
+        `;
+        btn.textContent = s;
+        btn.onmouseover = () => { btn.style.background = 'rgba(59,130,246,0.15)'; btn.style.borderColor = 'var(--accent-blue)'; };
+        btn.onmouseout = () => { btn.style.background = 'rgba(59,130,246,0.08)'; btn.style.borderColor = 'rgba(59,130,246,0.2)'; };
+        btn.onclick = () => {
+          document.getElementById('chatInput').value = s;
+          document.getElementById('btnSend').disabled = false;
+          sendMessage();
+        };
+        sugEl.appendChild(btn);
+      });
+      container.appendChild(sugEl);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeSuggestions() {
+      const el = document.getElementById('suggestions');
+      if (el) el.remove();
+    }
+
+    function enableInput() {
+      const input = document.getElementById('chatInput');
+      input.disabled = false;
+      input.focus();
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text || !isWaitingForUser) return;
+
+      removeSuggestions();
+
+      // Run Perception Engine Matching in background (BPE + Minimum Edit Distance)
+      const perception = runPerceptionMatching(text);
+      console.log('🧠 [Agent Perception (BPE + Min-Edit-Distance)]', {
+        input: text,
+        bpeTokens: perception.bpeTokens.map(t => t.display),
+        matchedIntent: perception.bestMatch.name,
+        confidence: Math.round(perception.bestMatch.confidence * 100) + '%',
+        editDistance: perception.bestMatch.levResult.dist
+      });
+
+      addMessage('user', text);
+      messageCount++;
+
+      input.value = '';
+      input.style.height = '44px';
+      document.getElementById('btnSend').disabled = true;
+      isWaitingForUser = false;
+
+      // Track corrections
+      if (text.includes('đúng rồi') || text.includes('À ') || text.includes('projection') || text.includes('W ')) {
+        correctionCount++;
+      }
+
+      showTypingIndicator();
+
+      setTimeout(() => {
+        hideTypingIndicator();
+
+        if (perception.isFallback) {
+          // Low confidence fallback response
+          addMessage('agent', `Hic, mình là học trò đang muốn học về Transformer mà... 😅\n\nCâu bạn vừa nói (*"${text}"*) mình chưa thấy các khái niệm bám sát vào bài giảng trong slide.\n\nBạn hãy chỉ dạy cho mình dựa vào các từ khoá trong slide như <strong>Query, Key, Value, √d<sub>k</sub>, hoặc Multi-Head</strong> nhé! 🙏`, '⚠️ Perception: Độ tương đồng thấp. Học trò hỏi lại để bám sát bài.');
+          isWaitingForUser = true;
+          enableInput();
+          const currentStage = adaptiveIntentBank[currentStageKey] || adaptiveIntentBank['stage1'];
+          showSuggestions(currentStage.candidates[0].suggestions);
+          return;
+        }
+
+        // Matched response
+        conceptCount++;
+        const progress = Math.min(100, (conceptCount / 4) * 100);
+        document.getElementById('progressFill').style.width = progress + '%';
+        document.getElementById('progressLabel').textContent = `${Math.min(conceptCount, 4)}/4 khái niệm`;
+
+        addMessage('agent', perception.bestMatch.response.text, perception.bestMatch.response.meta);
+
+        if (perception.bestMatch.response.isEnd) {
+          setTimeout(() => {
+            document.getElementById('congratsPopup').classList.remove('hidden');
+          }, 1500);
+          return;
+        }
+
+        // Advance stage
+        currentStageKey = perception.bestMatch.nextStage;
+        isWaitingForUser = true;
+        enableInput();
+
+        if (perception.bestMatch.suggestions && perception.bestMatch.suggestions.length) {
+          showSuggestions(perception.bestMatch.suggestions);
+        }
+      }, 1400);
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!document.getElementById('btnSend').disabled) {
+          sendMessage();
+        }
+      }
+    }
+
+    function autoResize(el) {
+      el.style.height = '44px';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+      document.getElementById('btnSend').disabled = !el.value.trim();
+    }
+
+    // ===== INIT =====
+    showSlide(0);
+  </script>
+</body>
+</html>
