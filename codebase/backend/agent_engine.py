@@ -2,13 +2,13 @@ import os
 import sys
 import json
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Generator
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
-from config.config import settings
+from config.config import settings, clean_lesson_title
 from db.graph_service import GraphService
 from db.data_loader import RealDataLoader
 from backend.prompt import (
@@ -46,6 +46,44 @@ class SocraticAgentEngine:
         self.concept_turns: Dict[str, int] = {}
         print(f"✅ SocraticAgentEngine (ChatNVIDIA: {settings.NVIDIA_MODEL}) initialized successfully.")
 
+    def generate_topic_intro_directions(self, concept_node: Dict[str, Any]) -> List[str]:
+        """
+        Tạo danh sách 3 hướng gợi ý mở đầu cho học viên tự do lựa chọn cách tiếp cận:
+        Ưu tiên trích xuất từ 4 điểm mù đồ thị FalkorDB (Cơ chế, Đánh đổi, Ngộ nhận, Ví dụ thực tế).
+        """
+        concept_id = concept_node.get("id", "")
+        concept_name = concept_node.get("name", "chủ đề này")
+        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id)
+
+        directions = []
+
+        # Hướng 1: Cơ chế & Bản chất
+        mechanism_info = pedagogical_context.get("mechanism") if pedagogical_context else None
+        if mechanism_info and mechanism_info.get("name"):
+            directions.append(f"Cơ chế cốt lõi: Giải thích cách thức vận hành hoặc {mechanism_info['name']}")
+        else:
+            directions.append(f"Bản chất cốt lõi: Bạn hiểu thế nào về khái niệm và nguyên lý vận hành của {concept_name}?")
+
+        # Hướng 2: Sự đánh đổi (Trade-off) hoặc Thách thức kỹ thuật
+        tradeoff_info = pedagogical_context.get("tradeoff") if pedagogical_context else None
+        if tradeoff_info and tradeoff_info.get("dimension_a") and tradeoff_info.get("dimension_b"):
+            directions.append(f"Sự đánh đổi kỹ thuật: Bài toán cân đối giữa {tradeoff_info['dimension_a']} và {tradeoff_info['dimension_b']}")
+        else:
+            directions.append(f"Thách thức thực tế: Những khó khăn hoặc sự đánh đổi kỹ thuật lớn nhất khi áp dụng {concept_name}")
+
+        # Hướng 3: Cạm bẫy ngộ nhận hoặc Ví dụ thực tế
+        misconception_info = pedagogical_context.get("misconception") if pedagogical_context else None
+        counter_example_info = pedagogical_context.get("counter_example") if pedagogical_context else None
+
+        if misconception_info and misconception_info.get("name"):
+            directions.append(f"Cạm bẫy ngộ nhận: Những sai lầm hoặc hiểu chưa đúng phổ biến về {misconception_info['name']}")
+        elif counter_example_info and counter_example_info.get("name"):
+            directions.append(f"Tình huống thực tế: Phân tích ví dụ cụ thể hoặc trường hợp biên ({counter_example_info['name']})")
+        else:
+            directions.append(f"Ví dụ minh họa: Nêu một ví dụ đời thường hoặc tình huống thực tế mà bạn thấy rõ nhất về {concept_name}")
+
+        return directions[:3]
+
     def generate_smart_opening_question(self, concept_name: str, quote_text: str = "", core_truth: str = "") -> str:
         """Generate focused opening question targeting technical trade-offs using ChatNVIDIA."""
         prompt = build_opening_question_prompt(
@@ -60,14 +98,36 @@ class SocraticAgentEngine:
                 system_prompt=PROTEGE_SYSTEM_PROMPT
             )
             if generation_result:
-                clean_question = re.sub(r'["\']', '', generation_result).strip()
-                if len(clean_question) > 20 and not clean_question.startswith("Theo bạn, thách thức kỹ thuật"):
+                raw_text = generation_result.strip()
+
+                # Bóc tách nếu có Draft hoặc nhiều dòng: lấy câu hỏi hoàn chỉnh kết thúc bằng ?
+                lines = raw_text.splitlines()
+                candidate_question = ""
+                for line in reversed(lines):
+                    stripped_line = line.strip()
+                    if "?" in stripped_line and not any(kw in stripped_line.lower() for kw in ["count:", "under", "ends with", "draft", "good."]):
+                        candidate_question = stripped_line
+                        break
+
+                if not candidate_question:
+                    candidate_question = raw_text
+
+                # Làm sạch số đếm từ (1), (2)... và các nhãn Draft, Count, metadata
+                clean_question = re.sub(r'\(\d+\)', '', candidate_question)
+                clean_question = re.sub(r'Draft\s*\d+:?', '', clean_question, flags=re.IGNORECASE)
+                clean_question = re.sub(r'Count:.*', '', clean_question, flags=re.IGNORECASE)
+                clean_question = re.sub(r'Under\s+\d+\s+words.*', '', clean_question, flags=re.IGNORECASE)
+                clean_question = re.sub(r'[\U00004e00-\U00009fff]', '', clean_question)
+                clean_question = re.sub(r'["\'\*]', '', clean_question).strip()
+                clean_question = re.sub(r'\s+', ' ', clean_question).strip()
+
+                if len(clean_question) > 15 and "?" in clean_question:
                     return clean_question
         except Exception as exc:
             print(f"⚠️ Error generating opening question with ChatNVIDIA: {exc}")
 
         # Safe fallback aligned with core concept pedagogy
-        return "Trong bài giảng có nói sản phẩm AI khác phần mềm truyền thống ở tính bất định xác suất. Theo bạn, làm sao để thiết kế cơ chế xử lý lỗi và kiểm soát kỳ vọng của người dùng khi hệ thống không thể đảm bảo độ chính xác 100%?"
+        return f"Theo bạn, thách thức kỹ thuật lớn nhất và sự đánh đổi cần cân nhắc khi triển khai {concept_name} là gì?"
 
     def get_current_feynman_concept(self) -> Dict[str, Any]:
         """Retrieve the active concept node from FalkorDB preserving local track context."""
@@ -158,6 +218,62 @@ class SocraticAgentEngine:
             "learning_question": "Bạn có thể giải thích theo cách hiểu của bạn về chủ đề này được không?",
             "quote": ""
         }
+
+    def generate_topic_intro_directions(self, concept_node: Dict[str, Any]) -> List[str]:
+        """
+        Tạo các hướng gợi ý gợi mở để học viên bắt đầu giảng bài cho Alex.
+        Ưu tiên trích xuất từ đồ thị tri thức đa thực thể FalkorDB (Mechanism, Tradeoff, Misconception),
+        kết hợp fallback sư phạm tự nhiên, không tốn token LLM và độ trễ 0ms.
+        """
+        concept_id = concept_node.get("id", "")
+        raw_name = concept_node.get("name", "chủ đề này")
+        concept_name = clean_lesson_title(raw_name)
+
+        directions = []
+        try:
+            pedagogical = self.graph_service.get_concept_pedagogical_context(concept_id)
+            if pedagogical:
+                # 1. Hướng cơ chế
+                mech = pedagogical.get("mechanism")
+                if mech and mech.get("name"):
+                    directions.append(f"**Cơ chế cốt lõi:** {mech['name']} (bản chất và cách thức vận hành)")
+
+                # 2. Hướng đánh đổi / thách thức
+                tradeoff = pedagogical.get("tradeoff")
+                if tradeoff and tradeoff.get("name"):
+                    dim_a = tradeoff.get("dimension_a")
+                    dim_b = tradeoff.get("dimension_b")
+                    if dim_a and dim_b:
+                        directions.append(f"**Sự đánh đổi:** {tradeoff['name']} (cân nhắc giữa {dim_a} và {dim_b})")
+                    else:
+                        directions.append(f"**Sự đánh đổi thực tế:** {tradeoff['name']}")
+
+                # 3. Hướng sai lầm / góc nhìn phản biện
+                misconception = pedagogical.get("misconception")
+                if misconception and misconception.get("name"):
+                    directions.append(f"**Góc nhìn phản biện / Hiểu lầm thường gặp:** {misconception['name']}")
+
+                # 4. Hướng ví dụ / tình huống
+                counter = pedagogical.get("counter_example")
+                if counter and counter.get("name") and len(directions) < 3:
+                    directions.append(f"**Ví dụ / Tình huống áp dụng:** {counter['name']}")
+        except Exception as e:
+            print(f"Lỗi khi trích xuất hướng gợi ý từ đồ thị: {e}")
+
+        # Fallback nếu đồ thị chưa có liên kết cụ thể: đảm bảo luôn có 3 hướng mở gợi ý hấp dẫn
+        if not directions:
+            directions = [
+                f"**Bản chất & Vai trò:** Định nghĩa {concept_name} là gì và giải quyết bài toán quan trọng nào?",
+                f"**Cơ chế hoạt động:** Các thành phần cấu tạo hoặc quy trình các bước vận hành cốt lõi.",
+                f"**Ứng dụng & Đánh đổi:** Một ví dụ thực tế hoặc thách thức kỹ thuật lớn nhất khi triển khai."
+            ]
+        elif len(directions) < 3:
+            if not any("Định nghĩa" in d or "Bản chất" in d for d in directions):
+                directions.insert(0, f"**Bản chất & Vai trò:** Khái niệm {concept_name} và mục tiêu chính trong bài học.")
+            if len(directions) < 3:
+                directions.append(f"**Ứng dụng thực tế:** Một ví dụ hoặc trường hợp cụ thể bạn thấy tâm đắc nhất.")
+
+        return directions[:3]
 
     def process_student_message(self, student_msg: str, session_id: str = "default_session") -> Dict[str, Any]:
         """
@@ -357,6 +473,243 @@ class SocraticAgentEngine:
             "global_summary": self.memory.get_global_summary(session_id)
         }
 
+    def process_student_message_stream(
+        self,
+        student_msg: str,
+        session_id: str = "default_session"
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Quy trình xử lý phản hồi học viên dạng STREAMING:
+        1. Giám định 8 tiêu chí Feynman & đối chiếu FalkorDB (yield event 'thinking')
+        2. Stream từng token/chunk của Alex về UI bằng ChatNVIDIA qua client.stream (yield event 'token')
+        3. Ghi log hội thoại vào codebase/db/logs/, cập nhật bộ nhớ và đồ thị (yield event 'done')
+        """
+        current_concept = self.get_current_feynman_concept()
+        concept_id = current_concept["id"]
+        concept_name = current_concept["name"]
+        citation = current_concept["citation"]
+        core_truth = current_concept["core_truth"]
+        quote_text = current_concept.get("quote", "")
+
+        current_question = self.memory.get_last_question(session_id)
+        if not current_question:
+            current_question = current_concept.get("learning_question") or current_concept.get("child_question", "")
+
+        turn_count = self.concept_turns.get(concept_id, 0) + 1
+        self.concept_turns[concept_id] = turn_count
+
+        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id)
+
+        evaluation_result = self.guardrails.evaluate_teaching_explanation(
+            student_msg=student_msg,
+            core_truth=core_truth,
+            quote_text=quote_text,
+            turn_count=turn_count,
+            pedagogical_context=pedagogical_context
+        )
+
+        is_cheating = evaluation_result.get("is_cheating", False)
+        is_mastered = evaluation_result.get("is_mastered", False)
+        has_causal = evaluation_result.get("has_causal_reasoning", False)
+        has_example = evaluation_result.get("has_concrete_example", False)
+        factual_contradiction = evaluation_result.get("factual_contradiction", False)
+        is_out_of_scope = evaluation_result.get("is_out_of_scope", False)
+        buzzwords = evaluation_result.get("buzzwords_unexplained", [])
+        status_label = evaluation_result.get("status_label", "Hỏi vặn về cơ chế")
+        critique = evaluation_result.get("critique", "Đang đào sâu cơ chế.")
+
+        pedagogical_spotlight_description = "Đang rà soát toàn diện"
+        if pedagogical_context:
+            misconception_info = pedagogical_context.get("misconception")
+            mechanism_info = pedagogical_context.get("mechanism")
+            tradeoff_info = pedagogical_context.get("tradeoff")
+            counter_example_info = pedagogical_context.get("counter_example")
+            if factual_contradiction and misconception_info:
+                pedagogical_spotlight_description = f"⚠️ Bẫy ngộ nhận: {misconception_info.get('name')}"
+            elif not has_causal and mechanism_info:
+                pedagogical_spotlight_description = f"⚙️ Cơ chế nhân quả: {mechanism_info.get('name')}"
+            elif not has_example and counter_example_info:
+                pedagogical_spotlight_description = f"💡 Ví dụ thực tế: {counter_example_info.get('name')}"
+            elif tradeoff_info:
+                pedagogical_spotlight_description = f"⚖️ Đánh đổi kỹ thuật: {tradeoff_info.get('dimension_a')} vs {tradeoff_info.get('dimension_b')}"
+
+        phase1_details = [
+            f"Nhận xét sư phạm: {critique}",
+            f"Điểm mù Graph FalkorDB: {pedagogical_spotlight_description}",
+            f"Cơ chế nhân quả: {'Đạt chuẩn chuỗi nguyên nhân - kết quả' if has_causal else 'Chưa làm rõ cơ chế nhân quả bên dưới'}",
+            f"Ví dụ thực tế: {'Đã có ví dụ cụ thể / đời thường' if has_example else 'Chưa có ví dụ minh họa'}",
+            f"Nguồn sự thật (§5 ①): {'Phát hiện ngộ nhận mâu thuẫn bài giảng' if factual_contradiction else 'Đúng bản chất kiến thức'}",
+            f"Phạm vi thẩm quyền (§5 ③): {'Ngoài phạm vi / đòi đáp án' if is_out_of_scope else 'Đúng trọng tâm bài học'}",
+            f"Thuật ngữ chuyên môn: {', '.join(buzzwords) if buzzwords else 'Không lạm dụng buzzword'}",
+            f"Đánh giá tổng quát: {status_label} (Lượt {turn_count}/{settings.MAX_PROBING_TURNS})"
+        ]
+
+        thinking_phases = [
+            {
+                "phase_name": "Phase 1: Thẩm định 8 tiêu chí sư phạm Feynman",
+                "badge": "Giám định",
+                "details": phase1_details
+            }
+        ]
+
+        # 1. Phát tán sự kiện Thinking ngay lập tức khi hoàn tất giám định
+        yield {
+            "type": "thinking",
+            "thinking_phases": thinking_phases,
+            "evaluation": evaluation_result,
+            "event_label": status_label,
+            "citation": citation,
+            "concept_name": concept_name
+        }
+
+        reply_chunks = []
+        model_thinking_chunks = []
+        event_type = "socratic_probing"
+        detail = f"Hỏi vặn căn cứ {concept_name}"
+
+        # 2. Xử lý các nhánh và Stream Tokens
+        if is_cheating:
+            reply = (
+                f"Đoạn này nghe giống như trích dẫn từ tài liệu {citation} quá bạn ơi. "
+                f"Nếu để bạn tự diễn đạt lại bằng ngôn ngữ của riêng bạn về {concept_name}, "
+                f"thì bạn giải thích điểm mấu chốt ở đây như thế nào?"
+            )
+            for word in reply.split(" "):
+                chunk_str = word + " "
+                reply_chunks.append(chunk_str)
+                yield {"type": "token", "chunk": chunk_str}
+            event_type = "parroting_alert"
+            detail = f"Trùng khớp nguyên văn {citation} — yêu cầu tự diễn giải"
+            self.memory.set_last_question(session_id, reply)
+
+        elif is_out_of_scope:
+            reply = "Mấy việc đó bạn xem trên kênh thông báo của lớp nha! Mình cũng là sinh viên đang học nè, đâu có đáp án đâu. Hai đứa mình cùng tập trung giải thích lại chỗ cơ chế này đi bạn ơi?"
+            for word in reply.split(" "):
+                chunk_str = word + " "
+                reply_chunks.append(chunk_str)
+                yield {"type": "token", "chunk": chunk_str}
+            event_type = "out_of_scope_deflection"
+            detail = "Từ chối việc ngoài thẩm quyền, kéo về bài giảng"
+            self.memory.set_last_question(session_id, reply)
+
+        else:
+            memory_context = self.memory.format_memory_for_prompt(session_id)
+            probing_prompt = build_protege_probing_prompt(
+                concept_name=concept_name,
+                citation=citation,
+                core_truth=core_truth,
+                student_msg=student_msg,
+                analysis_report=evaluation_result,
+                pedagogical_context=pedagogical_context,
+                conversation_history=memory_context
+            )
+
+            is_inside_think = False
+            for chunk_data in self.nvidia_client.generate_stream_chunks(
+                prompt=probing_prompt,
+                system_prompt=PROTEGE_SYSTEM_PROMPT
+            ):
+                reasoning = chunk_data.get("reasoning", "")
+                if reasoning:
+                    model_thinking_chunks.append(reasoning)
+
+                content = chunk_data.get("content", "")
+                if content:
+                    if "<think>" in content:
+                        is_inside_think = True
+                        content = content.replace("<think>", "")
+                    if "</think>" in content:
+                        is_inside_think = False
+                        parts = content.split("</think>")
+                        model_thinking_chunks.append(parts[0])
+                        content = parts[1] if len(parts) > 1 else ""
+
+                    if is_inside_think:
+                        model_thinking_chunks.append(content)
+                    elif content:
+                        reply_chunks.append(content)
+                        yield {"type": "token", "chunk": content}
+
+            reply = "".join(reply_chunks).strip()
+            if not reply or len(reply) < 10:
+                fallback_msg = "Ý bạn giải thích có điểm đáng chú ý, nhưng về mặt cơ chế vận hành bên dưới thì bài toán này được xử lý cụ thể như thế nào bạn nhỉ?"
+                yield {"type": "token", "chunk": fallback_msg}
+                reply = fallback_msg
+
+            if not is_mastered and turn_count >= settings.MAX_PROBING_TURNS:
+                hint_str = f"\n\n(Gợi ý nhỏ: Mình thấy chỗ này còn hơi trừu tượng, bạn thử mở lại {citation} xem phần cơ chế cốt lõi rồi hai đứa mình cùng bàn tiếp nhé!)"
+                reply += hint_str
+                yield {"type": "token", "chunk": hint_str}
+
+            is_end_of_graph = False
+            if is_mastered:
+                event_type = "causal_breakthrough"
+                detail = f"Đã làm chủ {concept_name}"
+                try:
+                    self.graph_service.graph.query(f"MATCH (fc:FeynmanConcept {{id: '{concept_id}'}}) SET fc.status = 'COVERED'")
+                except Exception:
+                    pass
+                self.graph_service.mark_concept_covered(concept_id)
+                is_end_of_graph, _, _ = self.graph_service.is_end_of_graph()
+
+                if not is_end_of_graph:
+                    next_concept = self.get_current_feynman_concept()
+                    next_question = next_concept.get("learning_question") or next_concept.get("child_question", "")
+                    next_str = f"\n\nSang phần tiếp theo về **{next_concept['name']}**, mình đang băn khoăn:\n> *\"{next_question}\"*"
+                    reply += next_str
+                    yield {"type": "token", "chunk": next_str}
+                    self.memory.set_last_question(session_id, next_question)
+                else:
+                    congrats_str = "\n\nTuyệt vời, bạn đã giúp mình nắm vững toàn bộ chuỗi mắt xích kiến thức nền tảng của bài học này bằng lập luận rất chặt chẽ kèm ví dụ sinh động."
+                    reply += congrats_str
+                    yield {"type": "token", "chunk": congrats_str}
+                    self.memory.set_last_question(session_id, "Đã hoàn thành toàn bộ mắt xích nền tảng")
+            else:
+                event_type = "socratic_probing"
+                detail = f"Hỏi vặn căn cứ {concept_name}"
+                self.memory.set_last_question(session_id, reply)
+
+        full_thinking = "".join(model_thinking_chunks).strip()
+        if full_thinking and len(full_thinking) > 10:
+            thinking_phases.append({
+                "phase_name": "Phase 2: Chuỗi suy ngẫm nội tại của Alex (NVIDIA Nemotron Reasoning)",
+                "badge": "Tư duy ngầm",
+                "raw_thought": full_thinking
+            })
+        else:
+            thinking_phases.append({
+                "phase_name": "Phase 2: Định hình chiến lược phản biện Socratic",
+                "badge": "Phản biện",
+                "details": [
+                    f"Bám sát lời giải thích: \"{student_msg[:75]}...\"",
+                    f"Mục tiêu: Đào sâu vào cơ chế mắt xích của '{concept_name}', tránh dùng câu hỏi rập khuôn."
+                ]
+            })
+
+        turn_record = self.memory.add_turn(
+            session_id=session_id,
+            ask=current_question,
+            answer=student_msg,
+            agent_reply=reply,
+            concept_id=concept_id,
+            concept_name=concept_name,
+            event_label=status_label,
+            critique=critique
+        )
+
+        yield {
+            "type": "done",
+            "reply": reply,
+            "thinking_phases": thinking_phases,
+            "event_type": event_type,
+            "event_label": status_label,
+            "detail": detail,
+            "citation": citation,
+            "is_end_of_graph": is_end_of_graph if 'is_end_of_graph' in locals() else False,
+            "progress": self.graph_service.get_progress(),
+            "turn_record": turn_record
+        }
+
     def get_session_history(self, session_id: str = "default_session") -> List[Dict[str, Any]]:
         """Retrieve complete turn history records for session."""
         return self.memory.get_history(session_id)
@@ -388,27 +741,21 @@ class SocraticAgentEngine:
         Switch active lesson track on FalkorDB:
         - Update active track
         - Fetch first concept for new track
-        - Generate opening question using ChatNVIDIA
+        - Generate topic intro directions
         - Update last question in session memory
         """
         self.graph_service.set_active_track(track_id)
         self.concept_turns.clear()
 
         current_concept = self.get_current_feynman_concept()
-        question_text = current_concept.get("learning_question") or current_concept.get("child_question", "")
-        if not question_text or len(question_text) < 15:
-            question_text = self.generate_smart_opening_question(
-                current_concept["name"],
-                current_concept.get("quote", ""),
-                current_concept.get("core_truth", "")
-            )
-
-        self.memory.set_last_question(session_id, question_text)
+        directions = self.generate_topic_intro_directions(current_concept)
+        clean_name = clean_lesson_title(current_concept.get("name", "chủ đề mới"))
+        self.memory.set_last_question(session_id, f"Khởi đầu ôn tập: {clean_name}")
 
         return {
             "status": "success",
             "active_track": track_id,
             "concept": current_concept,
-            "opening_question": question_text,
+            "topic_directions": directions,
             "progress": self.graph_service.get_progress(track=track_id)
         }

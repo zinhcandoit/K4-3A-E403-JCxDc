@@ -15,7 +15,7 @@ if codebase_dir not in sys.path:
 load_dotenv(os.path.join(codebase_dir, ".env"))
 
 from backend.agent_engine import SocraticAgentEngine
-from config.config import settings
+from config.config import settings, clean_lesson_title
 try:
     from ui.visualize_graph import generate_graph_html
 except ImportError:
@@ -387,11 +387,46 @@ def call_api_graph(track: str = None):
 
 
 # Track and lesson state initialization
+available_lessons = call_api_lessons()
+lesson_map = {lesson["track"]: lesson for lesson in available_lessons}
+
 if "selected_track" not in st.session_state:
     st.session_state.selected_track = settings.get_default_track()
 
 engine.graph_service.set_active_track(st.session_state.selected_track)
 current_feynman_concept = engine.get_current_feynman_concept()
+current_lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
+
+
+def build_initial_topic_message(concept_node: dict, lesson_title: str = "") -> dict:
+    """
+    Tạo thông điệp mở đầu phiên học: Alex không bắt đầu ngay với một câu hỏi,
+    mà chào hỏi, giới thiệu chủ đề cần ôn tập và gợi ý các hướng để học viên bắt đầu giảng.
+    """
+    topic_raw = lesson_title if lesson_title else concept_node.get("name", "Kiến thức trọng tâm")
+    clean_topic = clean_lesson_title(topic_raw)
+    directions = engine.generate_topic_intro_directions(concept_node)
+
+    directions_md = "\n".join([f"- {direction}" for direction in directions])
+
+    content = (
+        f"Chào bạn, mình là Alex. Chúng ta cùng bắt đầu ôn tập: **{clean_topic}** 🎓\n\n"
+        f"Một số hướng bạn có thể bắt đầu:\n"
+        f"{directions_md}\n\n"
+        f"Bạn có thể chọn một hướng ở trên hoặc bắt đầu giải thích theo cách hiểu của bạn nhé!"
+    )
+
+    # Đặt gợi ý ban đầu vào memory
+    engine.memory.set_last_question("vlearn_default", f"Khởi đầu ôn tập: {clean_topic}")
+
+    return {
+        "role": "assistant",
+        "content": content,
+        "event_type": "topic_intro",
+        "citation": concept_node.get("citation", "[VLearn]"),
+        "event_label": "Gợi ý chủ đề 🎓",
+        "time": datetime.now().strftime("%H:%M")
+    }
 
 
 def get_live_socratic_opening(concept_node: dict) -> str:
@@ -402,28 +437,24 @@ def get_live_socratic_opening(concept_node: dict) -> str:
     return raw_question
 
 
-# Auto-clean legacy messages containing formulaic robotic phrases
+# Auto-clean legacy messages containing formulaic robotic phrases, token drafts or previous question openings
 if "messages" in st.session_state and st.session_state.messages:
     first_content = st.session_state.messages[0].get("content", "")
-    if "lại vận hành như vậy" in first_content or "Cơ chế cốt lõi và nguyên nhân" in first_content or "thách thức kỹ thuật lớn nhất khi giải quyết vấn đề" in first_content:
+    if (
+        "lại vận hành như vậy" in first_content
+        or "Cơ chế cốt lõi và nguyên nhân" in first_content
+        or "thách thức kỹ thuật lớn nhất khi giải quyết vấn đề" in first_content
+        or "Đọc qua bài giảng, mình có một thắc mắc về mặt kỹ thuật muốn hỏi bạn" in first_content
+        or "(12)" in first_content
+        or "Draft 2:" in first_content
+        or "Under 35 words" in first_content
+        or "> *\"" in first_content
+    ):
         del st.session_state["messages"]
 
 
 if "messages" not in st.session_state:
-    opening_question = get_live_socratic_opening(current_feynman_concept)
-    st.session_state.messages = [
-        {
-            "role": "assistant",
-            "content": f"Chào bạn, mình là Alex. Mình đang cùng bạn tìm hiểu về chủ đề **{current_feynman_concept['name']}** trên VLearn.\n\n"
-                       f"Đọc qua bài giảng, mình có một thắc mắc về mặt kỹ thuật muốn hỏi bạn:\n"
-                       f"> *\"{opening_question}\"*\n\n"
-                       f"Theo bạn thì vấn đề này nên được tiếp cận và xử lý như thế nào?",
-            "event_type": "probing",
-            "citation": current_feynman_concept.get("citation", "[VLearn]"),
-            "event_label": "Thắc mắc về cơ chế",
-            "time": datetime.now().strftime("%H:%M")
-        }
-    ]
+    st.session_state.messages = [build_initial_topic_message(current_feynman_concept, current_lesson_title)]
 
 
 if "events" not in st.session_state:
@@ -444,19 +475,25 @@ if "active_view" not in st.session_state:
 # ==========================================
 with st.sidebar:
     # 0. Lesson selection preserving knowledge locality
-    available_lessons = call_api_lessons()
-    lesson_map = {lesson["track"]: lesson for lesson in available_lessons}
     track_keys = list(lesson_map.keys()) if lesson_map else [st.session_state.selected_track]
 
     current_idx = 0
     if st.session_state.selected_track in track_keys:
         current_idx = track_keys.index(st.session_state.selected_track)
 
+    def format_lesson_item(k: str) -> str:
+        lesson = lesson_map.get(k, {})
+        raw_title = lesson.get("title", k)
+        cleaned = clean_lesson_title(raw_title)
+        if lesson.get("type") == "pdf" or "slide_" in k:
+            return f"📑 Slide: {cleaned}"
+        return f"📘 {cleaned}"
+
     selected_track_id = st.selectbox(
         "📚 Chọn bài học ôn tập:",
         options=track_keys,
         index=current_idx,
-        format_func=lambda k: lesson_map.get(k, {}).get("title", k),
+        format_func=format_lesson_item,
         help="Đồ thị tri thức được cách ly độc lập theo từng bài giảng/slide để bảo toàn tính cục bộ."
     )
 
@@ -464,22 +501,8 @@ with st.sidebar:
         st.session_state.selected_track = selected_track_id
         switch_info = call_api_switch_lesson(selected_track_id, session_id="vlearn_default")
         new_concept = switch_info.get("concept", engine.get_current_feynman_concept())
-        new_opening = switch_info.get("opening_question") or get_live_socratic_opening(new_concept)
         lesson_title = lesson_map.get(selected_track_id, {}).get("title", selected_track_id)
-        st.session_state.messages = [
-            {
-                "role": "assistant",
-                "content": f"Chào bạn, mình là Alex. Chúng ta cùng bắt đầu ôn tập:\n**{lesson_title}** 🎓\n\n"
-                           f"Bắt đầu với phần trọng tâm: **{new_concept['name']}**.\n\n"
-                           f"Mình có một thắc mắc kỹ thuật muốn cùng bạn làm rõ:\n"
-                           f"> *\"{new_opening}\"*\n\n"
-                           f"Bạn phân tích và giải thích cơ chế giúp mình nhé!",
-                "event_type": "probing",
-                "citation": new_concept.get("citation", "[VLearn]"),
-                "event_label": "Bắt đầu bài học mới",
-                "time": datetime.now().strftime("%H:%M")
-            }
-        ]
+        st.session_state.messages = [build_initial_topic_message(new_concept, lesson_title)]
         st.session_state.is_ended = False
         st.session_state.session_finished = False
         st.rerun()
@@ -500,18 +523,8 @@ with st.sidebar:
                 pass
 
             current_feynman_concept = engine.get_current_feynman_concept()
-            opening_question = get_live_socratic_opening(current_feynman_concept)
-            st.session_state.messages = [
-                {
-                    "role": "assistant",
-                    "content": f"Chào bạn, mình cùng bạn bắt đầu lại từ đầu về chủ đề **{current_feynman_concept['name']}**.\n\n"
-                               f"> *\"{opening_question}\"*",
-                    "event_type": "probing",
-                    "citation": current_feynman_concept.get("citation", "[VLearn]"),
-                    "event_label": "Bắt đầu lại lộ trình",
-                    "time": datetime.now().strftime("%H:%M")
-                }
-            ]
+            lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
+            st.session_state.messages = [build_initial_topic_message(current_feynman_concept, lesson_title)]
             st.session_state.is_ended = False
             st.session_state.session_finished = False
             st.rerun()
@@ -659,20 +672,8 @@ if st.session_state.active_view == "chat":
                     pass
 
                 current_feynman_concept = engine.get_current_feynman_concept()
-                opening_question = get_live_socratic_opening(current_feynman_concept)
-                st.session_state.messages = [
-                    {
-                        "role": "assistant",
-                        "content": f"Chào bạn, mình là **Alex**! Mình đang cùng bạn tìm hiểu phần **'{current_feynman_concept['name']}'** trên VLearn 🎓.\n\n"
-                                   f"Có một thắc mắc cốt lõi về mặt cơ chế mà mình nghĩ mãi vẫn chưa thật sự thông suốt:\n"
-                                   f"> *\"{opening_question}\"*\n\n"
-                                   f"Bạn có thể phân tích nguyên nhân và giải thích cơ chế giúp mình được không?",
-                        "event_type": "probing",
-                        "citation": current_feynman_concept.get("citation", "[VLearn]"),
-                        "event_label": "Thắc mắc về cơ chế 🔍",
-                        "time": datetime.now().strftime("%H:%M")
-                    }
-                ]
+                lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
+                st.session_state.messages = [build_initial_topic_message(current_feynman_concept, lesson_title)]
                 st.session_state.is_ended = False
                 st.session_state.session_finished = False
                 st.rerun()
@@ -709,7 +710,7 @@ if st.session_state.active_view == "chat":
     # Hiển thị The End of Graph nếu chạm đích (khi đã đi qua hết các concept của bài học hiện tại)
     if st.session_state.is_ended:
         global_summary = engine.get_global_summary("vlearn_default")
-        active_lesson_label = lesson_map.get(st.session_state.selected_track, {}).get("title", st.session_state.selected_track)
+        active_lesson_label = clean_lesson_title(lesson_map.get(st.session_state.selected_track, {}).get("title", st.session_state.selected_track))
         st.markdown(f"""
         <div class="end-of-graph-box">
             <h3 style="color:#10a37f; margin:0 0 6px 0;">🎉 CHÚC MỪNG BẠN ĐÃ LÀM CHỦ TOÀN BỘ BÀI HỌC!</h3>
@@ -741,20 +742,12 @@ if st.session_state.active_view == "chat":
             other_lessons = [lesson for lesson in available_lessons if lesson["track"] != st.session_state.selected_track]
             if other_lessons:
                 for other_lesson in other_lessons[:4]:
-                    if st.button(f"👉 {other_lesson['title']}", key=f"end_opt_{other_lesson['track']}", use_container_width=True):
+                    clean_other_title = clean_lesson_title(other_lesson["title"])
+                    if st.button(f"👉 {clean_other_title}", key=f"end_opt_{other_lesson['track']}", use_container_width=True):
                         st.session_state.selected_track = other_lesson["track"]
                         switch_info = call_api_switch_lesson(other_lesson["track"], session_id="vlearn_default")
                         new_concept = switch_info.get("concept", engine.get_current_feynman_concept())
-                        new_opening = switch_info.get("opening_question") or get_live_socratic_opening(new_concept)
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": f"Chào bạn, chúc mừng bạn đã hoàn thành bài học trước! Chúng ta cùng bước sang bài tiếp theo:\n**{other_lesson['title']}** 🚀\n\n"
-                                       f"Vấn đề đầu tiên cần giải quyết:\n> *\"{new_opening}\"*\n\n"
-                                       f"Theo bạn thì cơ chế này hoạt động ra sao?",
-                            "event_type": "branch_activated",
-                            "event_label": "Chủ đề mới 🌿",
-                            "time": datetime.now().strftime("%H:%M")
-                        })
+                        st.session_state.messages.append(build_initial_topic_message(new_concept, other_lesson["title"]))
                         st.session_state.is_ended = False
                         st.rerun()
             else:
@@ -780,34 +773,56 @@ if st.session_state.active_view == "chat":
                 st.markdown(student_input)
 
             with st.chat_message("assistant", avatar="🎓"):
-                with st.spinner("⚡ Alex đang phân tích lập luận và đối chiếu tri thức..."):
-                    response = call_api_chat(student_input)
+                status_placeholder = st.empty()
+                thinking_placeholder = st.empty()
+                response_placeholder = st.empty()
+                tag_placeholder = st.empty()
 
-                thinking_phases = response.get("thinking_phases", [])
-                if thinking_phases:
-                    st.markdown(render_gemini_thinking_box(thinking_phases), unsafe_allow_html=True)
+                status_placeholder.status("⚡ Alex đang phân tích lập luận và đối chiếu tri thức...", expanded=False)
 
-                reply_text = response.get("agent_reply", "")
-                st.markdown(f"<div class='gemini-final-text'>{reply_text}</div>", unsafe_allow_html=True)
+                meta = {
+                    "thinking_phases": [],
+                    "event_label": "Hỏi vặn về cơ chế",
+                    "is_end": False
+                }
 
-                if response.get("event_label"):
-                    tag_color = "tag-green" if "nhân quả" in response.get("event_label", "") or "Đạt" in response.get("event_label", "") else ("tag-red" if "nguyên văn" in response.get("event_label", "") else "tag-orange")
-                    st.markdown(f"""
-                    <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
-                        <span class="tag-badge {tag_color}">{response.get('event_label')}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
+                def stream_tokens():
+                    for event in engine.process_student_message_stream(student_input, session_id="vlearn_default"):
+                        if event["type"] == "thinking":
+                            meta["thinking_phases"] = event.get("thinking_phases", [])
+                            meta["event_label"] = event.get("event_label", "")
+                            if meta["thinking_phases"]:
+                                thinking_placeholder.markdown(render_gemini_thinking_box(meta["thinking_phases"]), unsafe_allow_html=True)
+                            status_placeholder.empty()
+                        elif event["type"] == "token":
+                            yield event["chunk"]
+                        elif event["type"] == "done":
+                            meta["is_end"] = event.get("is_end_of_graph", False)
+                            final_phases = event.get("thinking_phases", [])
+                            if final_phases:
+                                meta["thinking_phases"] = final_phases
+                                thinking_placeholder.markdown(render_gemini_thinking_box(final_phases), unsafe_allow_html=True)
+
+                streamed_reply = response_placeholder.write_stream(stream_tokens())
+                status_placeholder.empty()
+
+                tag_color = "tag-green" if "nhân quả" in meta["event_label"] or "Đạt" in meta["event_label"] else ("tag-red" if "nguyên văn" in meta["event_label"] else "tag-orange")
+                tag_placeholder.markdown(f"""
+                <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+                    <span class="tag-badge {tag_color}">{meta['event_label']}</span>
+                </div>
+                """, unsafe_allow_html=True)
 
             st.session_state.messages.append({
                 "role": "assistant",
-                "content": reply_text,
-                "thinking_phases": thinking_phases,
-                "event_label": response.get("event_label"),
+                "content": streamed_reply,
+                "thinking_phases": meta["thinking_phases"],
+                "event_label": meta["event_label"],
                 "time": datetime.now().strftime("%H:%M")
             })
-            if response.get("is_end_of_graph", False):
+            if meta["is_end"]:
                 st.session_state.is_ended = True
-            
+
             current_progress = call_api_progress(st.session_state.selected_track)
             if current_progress.get("is_end", False) and current_progress.get("total", 0) > 0:
                 st.session_state.is_ended = True
@@ -824,7 +839,7 @@ elif st.session_state.active_view == "graph":
     col_header_title, col_header_back = st.columns([8, 2])
     with col_header_title:
         st.markdown("### 📊 Sơ Đồ Lộ Trình Kiến Thức Trực Quan")
-        active_title = lesson_map.get(st.session_state.selected_track, {}).get("title", st.session_state.selected_track)
+        active_title = clean_lesson_title(lesson_map.get(st.session_state.selected_track, {}).get("title", st.session_state.selected_track))
         st.caption(f"Đang hiển thị đồ thị bài học: {active_title}. Kéo thả, phóng to/thu nhỏ và nhấp vào từng chủ đề để xem chi tiết.")
     with col_header_back:
         if st.button("💬 Quay lại Chat", use_container_width=True, type="primary"):

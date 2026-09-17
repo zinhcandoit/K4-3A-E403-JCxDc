@@ -1,10 +1,42 @@
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 
 # Root directory of codebase
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
+
+
+def clean_lesson_title(raw_title: str) -> str:
+    """
+    Chuẩn hoá tiêu đề bài học hiển thị trên UI:
+    - Loại bỏ tiền tố: 'Transcript bài giảng (bản sạch) — Day 2 — ...'
+    - Loại bỏ hậu tố: '(phần sau buổi)', '(phần đầu buổi)', '(phần...)'
+    """
+    if not raw_title:
+        return ""
+    title = raw_title.strip()
+    # 1. Bỏ dấu markdown heading, icon và nhãn Slide nếu có
+    title = re.sub(r"^[#📘📑\s]+(?:Slide:\s*)?", "", title, flags=re.IGNORECASE)
+
+    # 2. Loại bỏ tiền tố hành chính dạng:
+    # "Transcript bài giảng (bản sạch) — Day 2 — ..." hoặc "Transcript bài giảng — Day 1 — ..."
+    title = re.sub(
+        r"^Transcript\s+bài\s+giảng\s*(?:\([^)]*\))?\s*[-—–:]?\s*(?:(?:Day|Buổi|Bài)\s*\d+\s*[-—–:.]?)?\s*",
+        "",
+        title,
+        flags=re.IGNORECASE
+    )
+    # Loại bỏ nếu chỉ có tiền tố "Day X — " hoặc "Buổi X — "
+    title = re.sub(r"^(?:Day|Buổi|Bài)\s*\d+\s*[-—–:.]\s*", "", title, flags=re.IGNORECASE)
+
+    # 3. Loại bỏ hậu tố: "(phần sau buổi)", "(phần đầu buổi)", "(phần ...)"
+    title = re.sub(r"\s*\([^)]*(?:phần|part)\s*[^)]*\)\s*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\s*\(phần\s+(?:sau|đầu)\s+buổi\)\s*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\s*[-—–:]\s*$", "", title)
+
+    return title.strip()
 
 
 class Config:
@@ -18,6 +50,7 @@ class Config:
     BASE_DIR = BASE_DIR
     DB_DIR = BASE_DIR / "db"
     INPUT_DIR = DB_DIR / "input"
+    LOGS_DIR = DB_DIR / "logs"
     CHAT_HISTORY_FILE = DB_DIR / "chat_history.json"
     VLEARN_DATA_DIR = BASE_DIR.parent / "data" / "vlearn-pack"
     TRANSCRIPT_DIR = VLEARN_DATA_DIR / "transcript"
@@ -43,7 +76,7 @@ class Config:
                     for line in transcript_path.read_text(encoding="utf-8", errors="ignore").splitlines()[:10]:
                         clean_line = line.strip()
                         if clean_line.startswith("# ") and len(clean_line) > 3:
-                            title = clean_line.replace("#", "").strip()
+                            title = clean_lesson_title(clean_line)
                             break
                 except Exception:
                     pass
@@ -58,13 +91,15 @@ class Config:
 
         if cls.INPUT_DIR.exists():
             for pdf_file in sorted(cls.INPUT_DIR.glob("*.pdf")):
+                slide_title = clean_lesson_title(pdf_file.stem.replace('_', ' ').title())
                 lessons.append({
                     "id": f"slide_{pdf_file.stem}",
                     "filename": pdf_file.name,
-                    "title": f"📑 Slide: {pdf_file.stem.replace('_', ' ').title()}",
+                    "title": f"📑 Slide: {slide_title}",
                     "type": "pdf",
                     "track": f"slide_{pdf_file.stem}"
                 })
+
 
         return lessons
 
@@ -89,11 +124,11 @@ class Config:
     NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b")
 
     # max_tokens = 8196: Đảm bảo trần token rộng rãi cho cả quá trình suy luận và câu trả lời hoàn chỉnh
-    NVIDIA_MAX_TOKENS = int(os.getenv("NVIDIA_MAX_TOKENS", 8196))
+    NVIDIA_MAX_TOKENS = int(os.getenv("NVIDIA_MAX_TOKENS", 16384))
     # reasoning_budget = 512 đủ cho suy nghĩ ngầm nhận diện lỗ hổng mà không gây trễ
     NVIDIA_REASONING_BUDGET = int(os.getenv("NVIDIA_REASONING_BUDGET", 4096))
     # temperature = 0.35: Precise (chính xác bám sát transcript, không bịa), đủ nhạy để hỏi ngược
-    NVIDIA_TEMPERATURE = float(os.getenv("NVIDIA_TEMPERATURE", 0.35))
+    NVIDIA_TEMPERATURE = float(os.getenv("NVIDIA_TEMPERATURE", 0.1))
     # top_p = 0.85: Loại bỏ token ngẫu nhiên, tập trung từ vựng kỹ thuật cốt lõi
     NVIDIA_TOP_P = float(os.getenv("NVIDIA_TOP_P", 0.85))
     # enable_thinking = True: Kích hoạt reasoning_content từ Nemotron

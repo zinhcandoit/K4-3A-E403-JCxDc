@@ -1,6 +1,8 @@
 import os
 import sys
+import json
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -81,6 +83,27 @@ def chat_endpoint(request: ChatRequest):
     session_id = request.session_id or "default_session"
     result = engine.process_student_message(request.message, session_id=session_id)
     return result
+
+
+@app.post("/api/chat_stream")
+def chat_stream_endpoint(request: ChatRequest):
+    """
+    Streaming endpoint trả về luồng sự kiện (SSE / Server-Sent Events):
+    - Khối Thinking & Giám định sư phạm (type: 'thinking')
+    - Từng token văn bản sinh ra theo thời gian thực (type: 'token')
+    - Tổng kết lượt tương tác và đồng bộ đồ thị (type: 'done')
+    """
+    if not request.message.strip():
+        raise HTTPException(status_code=400, detail="Tin nhắn không được để trống")
+
+    session_id = request.session_id or "default_session"
+
+    def event_stream():
+        for event in engine.process_student_message_stream(request.message, session_id=session_id):
+            payload = json.dumps(event, ensure_ascii=False)
+            yield f"data: {payload}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.get("/api/history")

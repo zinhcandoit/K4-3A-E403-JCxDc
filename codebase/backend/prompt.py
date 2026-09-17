@@ -37,11 +37,11 @@ def build_opening_question_prompt(concept_name: str, quote_text: str = "", core_
 ---
 
 Nhiệm vụ:
-1. Đặt đúng 1 câu hỏi ngắn gọn (dưới 35 từ) để bắt đầu thảo luận với bạn mình về chủ đề "{concept_name}".
+1. Đặt đúng 1 câu hỏi ngắn gọn, súc tích trong 1 câu duy nhất để bắt đầu thảo luận với bạn mình về chủ đề "{concept_name}".
 2. Tập trung vào sự đánh đổi (trade-off), nguyên nhân sâu xa hoặc thách thức kỹ thuật lớn nhất.
 3. Tuyệt đối không dùng mẫu câu sáo rỗng như "Tại sao lại vận hành như vậy?".
 4. Câu hỏi phải hoàn chỉnh cú pháp và kết thúc bằng dấu chấm hỏi (?).
-5. Chỉ trả về duy nhất 1 câu hỏi."""
+5. CHỈ XUẤT RA DUY NHẤT 1 CÂU HỎI TIẾNG VIỆT HOÀN CHỈNH. Tuyệt đối KHÔNG đánh số đếm từ (1) (2), KHÔNG viết bản nháp (Draft), KHÔNG đếm từ (Count), KHÔNG nhận xét tiếng Anh, KHÔNG dùng chữ Hán hay ký tự lạ."""
 
 
 def build_protege_probing_prompt(

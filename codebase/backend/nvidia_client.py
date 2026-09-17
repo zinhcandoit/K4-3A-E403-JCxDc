@@ -87,6 +87,8 @@ class NvidiaAIClient:
             model_kwargs = {}
             if settings.NVIDIA_ENABLE_THINKING:
                 model_kwargs["chat_template_kwargs"] = {"enable_thinking": True}
+            else:
+                model_kwargs["chat_template_kwargs"] = {"enable_thinking": False}
             self.client = ChatNVIDIA(
                 model=self.model_name,
                 api_key=self.api_key,
@@ -239,3 +241,34 @@ class NvidiaAIClient:
                     yield str(chunk.content)
         except Exception as e:
             print(f"⚠️ Lỗi stream ChatNVIDIA: {e}")
+
+    def generate_stream_chunks(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None
+    ) -> Generator[Dict[str, str], None, None]:
+        """
+        Stream chunks từ ChatNVIDIA yielding dictionary chứa reasoning và text content:
+        {"reasoning": reasoning_token, "content": content_token}
+        """
+        if not self.client:
+            return
+
+        self.rate_limiter.acquire()
+        messages: List[Dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        try:
+            for chunk in self.client.stream(messages):
+                reasoning = ""
+                if chunk.additional_kwargs and "reasoning_content" in chunk.additional_kwargs:
+                    reasoning = str(chunk.additional_kwargs["reasoning_content"] or "")
+
+                content = str(chunk.content or "")
+                if reasoning or content:
+                    yield {"reasoning": reasoning, "content": content}
+        except Exception as e:
+            print(f"⚠️ Lỗi streaming ChatNVIDIA chunks: {e}")
+

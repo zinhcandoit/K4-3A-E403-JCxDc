@@ -33,7 +33,10 @@ class SimpleConversationMemory:
         self.global_summaries: Dict[str, str] = {}  # Global summary string per session
         self.last_asked: Dict[str, str] = {}        # Most recent question asked by Alex
         self.nvidia_client = NvidiaAIClient()
+        from backend.conversation_logger import conversation_logger
+        self.logger = conversation_logger
         self.load_from_disk()
+        self.logger.sync_history_to_log(self.sessions)
 
     def set_last_question(self, session_id: str, question: str):
         """Record the most recent question asked by the agent."""
@@ -111,8 +114,24 @@ class SimpleConversationMemory:
             critique=critique
         )
         record["summary_sentence"] = summary_sentence
-
         self.save_to_disk()
+
+        # Ghi log hội thoại ra định dạng .log trong codebase/db/logs/
+        try:
+            self.logger.log_turn(
+                session_id=session_id,
+                turn=turn_number,
+                concept_name=concept_name,
+                event_label=event_label,
+                ask=ask,
+                answer=answer,
+                agent_reply=agent_reply,
+                critique=critique or summary_sentence,
+                timestamp=record["timestamp"]
+            )
+        except Exception as log_exc:
+            print(f"Logger error: {log_exc}")
+
         return record
 
     def get_recent_turns(self, session_id: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
