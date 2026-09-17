@@ -166,4 +166,5 @@ Lời bạn học vừa giải thích:
 YÊU CẦU ĐẦU RA BẮT BUỘC:
 1. Độ dài: Đúng 2 đến 3 câu hoàn chỉnh về mặt cú pháp.
 2. Nếu chưa đạt 'is_mastered', câu cuối cùng PHẢI là một câu hỏi hoàn chỉnh kết thúc bằng dấu chấm hỏi (?), hỏi trúng vào điểm mù bạn học chưa nhận ra.
-3. TUYỆT ĐỐI không dừng câu giữa chừng, không cắt cụt từ."""
+3. TUYỆT ĐỐI không dừng câu giữa chừng, không cắt cụt từ.
+4. CHỈ XUẤT DUY NHẤT LỜI THOẠI TIẾNG VIỆT CỦA ALEX (xưng mình - bạn). Tuyệt đối KHÔNG xuất ra dòng 'Here\'s a thinking process:' hay bất kỳ nội dung phân tích nháp nào ra ngoài."""

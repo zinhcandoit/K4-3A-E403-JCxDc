@@ -88,11 +88,10 @@ class Config:
     NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
     NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b")
 
-    # SIÊU THAM SỐ TỐI ƯU TỐC ĐỘ VÀ ĐỘ SẮC BÉN SOCRATIC
-    # max_tokens = 768 đảm bảo câu trả lời luôn hoàn chỉnh 100%, không bị cụt câu (xử lý lỗi Lượt 1 spec §9 dòng 168)
-    NVIDIA_MAX_TOKENS = int(os.getenv("NVIDIA_MAX_TOKENS", 768))
+    # max_tokens = 8196: Đảm bảo trần token rộng rãi cho cả quá trình suy luận và câu trả lời hoàn chỉnh
+    NVIDIA_MAX_TOKENS = int(os.getenv("NVIDIA_MAX_TOKENS", 8196))
     # reasoning_budget = 512 đủ cho suy nghĩ ngầm nhận diện lỗ hổng mà không gây trễ
-    NVIDIA_REASONING_BUDGET = int(os.getenv("NVIDIA_REASONING_BUDGET", 512))
+    NVIDIA_REASONING_BUDGET = int(os.getenv("NVIDIA_REASONING_BUDGET", 4096))
     # temperature = 0.35: Precise (chính xác bám sát transcript, không bịa), đủ nhạy để hỏi ngược
     NVIDIA_TEMPERATURE = float(os.getenv("NVIDIA_TEMPERATURE", 0.35))
     # top_p = 0.85: Loại bỏ token ngẫu nhiên, tập trung từ vựng kỹ thuật cốt lõi

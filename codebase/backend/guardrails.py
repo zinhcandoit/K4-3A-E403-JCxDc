@@ -73,16 +73,6 @@ class TrackD3Guardrails:
 
     def __init__(self, nvidia_client: Optional[NvidiaAIClient] = None):
         self.client = nvidia_client or NvidiaAIClient()
-        self.structured_judge = None
-
-        # Attempt structured output activation on ChatNVIDIA
-        llm = self.client.get_llm()
-        if llm:
-            try:
-                self.structured_judge = llm.with_structured_output(PedagogicalEvaluation)
-                print("✅ ChatNVIDIA structured_output activated for TrackD3Guardrails.")
-            except Exception as exc:
-                print(f"ℹ️ ChatNVIDIA structured_output fallback to JSON prompt parsing: {exc}")
 
     def evaluate_teaching_explanation(
         self,
@@ -184,31 +174,19 @@ CHỈ TRẢ VỀ DUY NHẤT ĐOẠN JSON TRÊN."""
 
         evaluation_instance: Optional[PedagogicalEvaluation] = None
 
-        # 1. Structured output execution
-        if self.structured_judge:
-            try:
-                evaluation_result = self.structured_judge.invoke(judge_prompt)
-                if isinstance(evaluation_result, PedagogicalEvaluation):
-                    evaluation_instance = evaluation_result
-                elif isinstance(evaluation_result, dict):
-                    evaluation_instance = PedagogicalEvaluation(**evaluation_result)
-            except Exception as exc:
-                print(f"ℹ️ structured_judge invoke exception: {exc}")
-
-        # 2. JSON Parsing fallback from ChatNVIDIA text output
-        if not evaluation_instance:
-            try:
-                raw_text = self.client.generate_text(
-                    prompt=judge_prompt,
-                    system_prompt="Bạn là Giám định viên Sư phạm AI nghiêm ngặt. Chỉ xuất JSON."
-                )
-                if raw_text:
-                    json_match = re.search(r"\{[\s\S]*\}", raw_text)
-                    if json_match:
-                        raw_dict = json.loads(json_match.group(0))
-                        evaluation_instance = PedagogicalEvaluation(**raw_dict)
-            except Exception as exc:
-                print(f"⚠️ JSON parsing fallback error: {exc}")
+        # Execute ChatNVIDIA prompt evaluation and parse JSON response
+        try:
+            raw_text = self.client.generate_text(
+                prompt=judge_prompt,
+                system_prompt="Bạn là Giám định viên Sư phạm AI nghiêm ngặt. Chỉ xuất JSON."
+            )
+            if raw_text:
+                json_match = re.search(r"\{[\s\S]*\}", raw_text)
+                if json_match:
+                    raw_dict = json.loads(json_match.group(0))
+                    evaluation_instance = PedagogicalEvaluation(**raw_dict)
+        except Exception as exc:
+            print(f"⚠️ Pedagogical evaluation parsing error: {exc}")
 
         if evaluation_instance:
             is_mastered = evaluation_instance.is_mastered
