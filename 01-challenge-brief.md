@@ -45,3 +45,32 @@ Chatlog VLearn tutor × học viên đã ẩn danh + **6 transcript bài giảng
 | 5 | User sẵn sàng thử *(khuyến khích — tính bonus)* | ≥2 người thật ngoài nhóm (tên cụ thể) đồng ý thử prototype trước demo |
 
 *Canvas nháp nộp tại CP1; evidence và spec hoàn thiện dần, chốt tại hạn chốt spec (21:00 17/9, tại CP4).*
+1.Hướng:D3 · Học bằng cách dạy — học viên dạy lại cho agent (Protégé effect).
+2.Người dùng:
+- Học viên trên nền tảng VLearn.
+- Giảng viên muốn theo dõi mức độ hiểu của học viên.
+3.Nỗi đau:
+- Học viên học xong nhưng chưa chắc hiểu sâu.
+- Không có người để “dạy lại” trong lớp đông.
+- Khi giải thích sai, người nghe thường không biết để hỏi ngược.
+- Học viên dễ copy nguyên tài liệu thay vì tự diễn đạt.
+4.Bằng chứng:
+- Các công việc gần đây đều có bước khó (ví dụ: tổng hợp số liệu, chọn hình minh họa, lọc thông tin nhiễu).
+- Người học thường mất thời gian ở khâu diễn đạt hoặc xử lý dữ liệu.
+Kết quả cuối cùng tốt hơn khi có công cụ hỗ trợ (Excel, Docs, Trello).
+→ Cho thấy việc “giải thích lại” giúp nhận diện chỗ hổng và cải thiện.
+5.Lát cắt:
+Một học viên dạy lại cho agent khái niệm “vì sao LLM bịa”. Agent hỏi ngược 2 chỗ thiếu căn cứ, học viên bổ sung và đưa ví dụ đúng.
+6.Tự động hóa:
+- Agent đối chiếu lời giải thích với transcript/slide.
+-Ghi log phiên dạy, đánh dấu chỗ hổng.
+-Tự động gợi ý học viên xem lại đoạn tài liệu liên quan.
+-Chấm “đã dạy được” theo rubric.
+7.Người thử:
+- Nhóm học viên hackathon (sinh viên CNTT, giáo dục).
+- Giảng viên tham gia để xem log và phản hồi.
+8.Phân công:
+- Thu: định nghĩa hướng, thiết kế canvas.
+- Nhóm dev: xây agent “ngây thơ có kiểm soát”, tích hợp đối chiếu nguồn.
+-Nhóm UX: thiết kế giao diện luyện tập, đảm bảo không tạo cảm giác thi cử.
+- Nhóm học viên thử nghiệm: nhập lời giải thích, nhận phản hồi từ agent.
