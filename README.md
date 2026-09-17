@@ -4,14 +4,14 @@
 
 ## 👥 Thành viên nhóm & Phân công vai trò
 
-**Lớp:** 3A · **Phòng:** E403 · **Cụm:** 4 · **Track:** ____
+**Lớp:** 3A · **Phòng:** E403 · **Cụm:** 4 · **Track:** D
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-| Trần Thu Phương |  |  |  |
-| Trần Thị Lan |  |  |  |
-| Nguyễn Phương Nam |  |  |  |
-| Thiều Quang Vinh | 2A202602877 |  |  |
+| Trần Thu Phương | 2A202602734 | Đội trưởng | Giám sát, theo dõi thông  |
+| Trần Thị Lan | 2A202602621 | Business Analyst | Thu thập khảo sát, phân tích painpoint và đề xuất giải pháp |
+| Nguyễn Phương Nam | 2A202602869 |  |  |
+| Thiều Quang Vinh | 2A202602877 | Technical Leader | Khảo sát và điền repo |
 
 > Nhóm copy nguyên file README này về repo của mình, rồi điền bảng trên. Cột **Phần việc đảm nhiệm** ghi càng cụ thể càng tốt.
 
