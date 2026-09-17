@@ -36,7 +36,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 |---|---|---|---|---|---|
 | **Ứng viên 1: Công cụ tự động tóm tắt slide bài giảng** | 78.3% học viên quá tải slide | 1-2 lần / tuần (mỗi buổi học) | Mất 15-20 phút đọc tóm tắt thụ động nhưng vẫn quên sau 24-48 giờ | Cao (dễ build) | **LOẠI** |
 | **Ứng viên 2: Trợ lý Q&A giải đáp thắc mắc tài liệu (RAG)** | 82.6% học viên từng thử | Mỗi khi gặp chỗ khúc mắc | Mất 10-15 phút copy-paste câu hỏi rời rạc, câu trả lời dài không đọng lại tư duy | Trung bình | **LOẠI** |
-| **Ứng viên 3: Protégé Socratic Agent ("Alex" - Học bằng cách dạy)** | 87.0% học viên có nhu cầu tự kiểm tra | Mỗi buổi tự ôn tập kiến thức | Bỏ ra 10-15 phút tương tác đóng vai người dạy, đổi lại phát hiện ngay lỗ hổng kiến thức | Khả thi với Graph + Structured Output | **CHỌN** |
+| **Ứng viên 3: Protégé Socratic Agent ("Alex" - Học bằng cách dạy)** | 87.0% học viên có nhu cầu tự kiểm tra | Mỗi buổi tự ôn tập kiến thức | Bỏ ra 10-15 phút tương tác đóng vai người dạy, đổi lại phát hiện ngay lỗ hổng kiến thức | Khả thi (mô hình 1-1 tinh gọn) | **CHỌN** |
 
 - Ứng viên ĐÃ LOẠI + vì sao:
   - **Đã loại Ứng viên 1 (Tóm tắt slide):** Dù giải quyết được cảm giác quá tải tài liệu trước mắt (~78%), nhưng khảo sát cho thấy >80% học viên nhận thấy phương pháp này thụ động, rời rạc và 65.2% vẫn mơ hồ không giải thích được bản chất. Phương pháp này chỉ dời chỗ tóm tắt chứ không giải quyết tận gốc ảo tưởng hiểu biết.
@@ -72,31 +72,32 @@ Loại: [ ] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 - **Lát cắt MỘT CÂU (1 user · 1 việc · 1 quyết định AI · 1 kết quả):** Một học viên vừa học khái niệm “vì sao LLM bịa” dạy lại khái niệm đó cho agent học trò; agent đối chiếu từng ý chính với transcript/slide, hỏi tối đa hai câu tại chỗ còn thiếu căn cứ hoặc ví dụ, và kết thúc khi học viên bổ sung được lời giải thích đúng kèm một ví dụ phù hợp.
 
 - **Luồng thiết kế trong phạm vi lát cắt:**
-  1. Học viên chọn fixture “vì sao LLM bịa” và thấy thông báo đây là phiên luyện dạy, không phải bài thi.
-  2. Học viên tự viết hoặc nói lời giải thích ban đầu trong ô nhập liệu.
-  3. AI trích các claim chính, đối chiếu với đoạn nguồn đã nạp, rồi chọn một trong ba hành động: hỏi ngược vì thiếu/sai, yêu cầu làm rõ vì input mơ hồ, hoặc xác nhận tạm thời khi đủ căn cứ.
-  4. Học viên sửa phần giải thích của mình và gửi lại; AI không viết thay toàn bộ.
-  5. Sau tối đa hai vòng hỏi ngược, hệ thống hiển thị các claim đã đủ căn cứ, claim cần xem lại, trích dẫn nguồn liên quan và trạng thái `needs_revision` hoặc `teachable`.
-  6. Học viên trả lời một câu hậu kiểm ngắn hoặc nêu một ví dụ mới để kiểm tra kết quả học, sau đó có thể xem lại transcript/slide.
+  1. Học viên mở giao diện trò chuyện, Agent Alex khởi động bằng một câu hỏi gợi mở Socratic từ sơ đồ bài học và thông báo đây là phiên luyện dạy, không phải bài thi.
+  2. Học viên tự viết lời giải thích/dạy lại khái niệm vào ô nhập liệu bằng ngôn từ của mình.
+  3. AI đối chiếu với tri thức bài giảng gốc, kiểm tra sao chép vẹt (`is_parroting`), thuật ngữ chưa làm rõ (`unexplained_buzzwords`) và lập luận nhân quả (`has_causal_reasoning`).
+  4. Học viên sửa hoặc bổ sung phần giải thích của mình và gửi lại; Alex chỉ hỏi vặn gợi mở vào mắt xích còn thiếu, tuyệt đối không viết thay hay đưa đáp án trước.
+  5. Sau 1–2 vòng hỏi ngược, hệ thống cập nhật trạng thái sư phạm (`pedagogical_status`); khi học viên giải thích thấu suốt bản chất (`is_mastered`), hệ thống xác nhận và mở khóa kiến thức trên sơ đồ bài học.
+  6. Học viên theo dõi tiến trình trên sơ đồ bài học thời gian thực, xem trích dẫn nguồn liên quan và có thể tiếp tục với nhánh rẽ tiếp theo.
 
 - **Non-goals (những thứ không build trong prototype):**
   - Không xây tutor trả lời mọi câu hỏi của khóa học hoặc thay thế flow VLearn Tutor hiện tại.
   - Không xây hệ thống chấm điểm chính thức, xếp hạng, cấp chứng nhận hoặc thay thế đánh giá của giảng viên.
   - Không xây persona đa tác tử, mô phỏng cả lớp học, hay hội thoại kéo dài nhiều vai.
   - Không tự động sinh bài giảng mới, tự viết lại toàn bộ lời giải thích hoặc đưa đáp án hoàn chỉnh trước khi học viên tự thử.
-  - Không kết luận chắc chắn rằng học viên “đã hiểu sâu” chỉ từ một lượt giải thích; trạng thái `teachable` chỉ có nghĩa là đạt rubric của fixture thử nghiệm.
+  - Không kết luận chắc chắn rằng học viên “đã hiểu sâu” chỉ từ một lượt giải thích; trạng thái `is_mastered` trên đồ thị chỉ có nghĩa là đạt tiêu chí của phiên luyện tập.
   - Không dùng nguồn ngoài transcript/slide fixture đã duyệt; không lưu hoặc công khai lời giải thích cá nhân cho cả lớp.
   - Không cá nhân hóa dài hạn theo hồ sơ nhạy cảm; prototype chỉ lưu log tối thiểu của phiên để phục vụ demo và validation.
+  - Không xây tính năng tương tác giọng nói (voice/audio call); chỉ tập trung hoàn thiện giao diện chat văn bản.
 
 - **Mức prototype nhắm tới:** [ ] Sketch [ ] Mock [x] Working
-  - **Phần thật:** giao diện Streamlit cho một phiên dạy; ít nhất một lời gọi `google-genai` chạy thật; prompt yêu cầu AI trả cấu trúc gồm claim, trạng thái căn cứ, lý do hỏi ngược, tối đa hai câu hỏi, citation và trạng thái phiên; transcript/slide fixture của một khái niệm; luồng gửi lại lời giải thích sau khi sửa; hiển thị nguồn và log phiên.
+  - **Phần thật:** giao diện người dùng cho một phiên dạy; ít nhất một lời gọi AI chạy thật; prompt yêu cầu AI trả cấu trúc gồm claim, trạng thái căn cứ, lý do hỏi ngược, tối đa hai câu hỏi, citation và trạng thái phiên; transcript/slide fixture của một khái niệm; luồng gửi lại lời giải thích sau khi sửa; hiển thị nguồn và log phiên.
   - **Phần mock/giới hạn:** chỉ dùng một khái niệm và một nguồn đã chọn; chưa tích hợp tài khoản hoặc API VLearn; dashboard giảng viên được mock bằng bảng/log đơn giản; rubric ban đầu là rubric cố định cho fixture gồm đúng khái niệm, nêu được quan hệ nhân quả và có ví dụ phù hợp; việc ghi nhận tiến bộ qua nhiều buổi chưa build.
   - **Điều kiện không được mock:** quyết định hỏi ngược và kiểm tra căn cứ phải đến từ lời gọi AI thật. Nếu API lỗi hoặc không có căn cứ, giao diện phải hiển thị trạng thái không chắc chắn thay vì dùng câu trả lời mẫu để giả vờ thành công.
 
 - **Automation:** [x] augment [x] conditional [ ] automate
-  - **Augment là mặc định:** mục tiêu học tập nằm ở việc học viên tự diễn đạt, nhận ra lỗ hổng và tự sửa. AI chỉ mở rộng năng lực phản biện bằng cách đọc nhanh lời giải thích, chỉ ra claim cần xem lại và hỏi đúng chỗ; AI không làm thay công việc nhận thức cốt lõi.
-  - **Conditional là các guard bắt buộc:** nếu lời giải thích quá ngắn hoặc mơ hồ, AI hỏi làm rõ; nếu không tìm thấy căn cứ trong fixture, AI nói “chưa đủ căn cứ”; nếu lời giải thích khác câu chữ tài liệu nhưng đúng nghĩa, AI không đánh dấu sai chỉ vì không trùng wording; nếu học viên đòi đáp án ngay, AI nhắc mục tiêu luyện dạy và đưa một câu hỏi gợi ý thay thế.
-  - **Cost-of-error:** false positive (đánh dấu sai một lời giải thích đúng) làm học viên mất tin và sửa kiến thức đúng; false negative (xác nhận một giải thích sai) nguy hiểm hơn vì học viên có thể rời phiên với hiểu biết sai mà không nhận ra. Vì vậy AI không tự chốt điểm, phải nêu citation/lý do, giới hạn số câu hỏi, và chuyển sang `needs_revision` khi không đủ căn cứ. Giảng viên vẫn là người duyệt rubric cuối cùng.
+  - **Augment là mặc định:** mục tiêu học tập nằm ở việc học viên tự diễn đạt, nhận ra lỗ hổng và tự sửa. AI chỉ mở rộng năng lực phản biện bằng cách đọc nhanh lời giải thích, chỉ ra điểm cần xem lại và hỏi đúng chỗ; AI không làm thay công việc nhận thức cốt lõi.
+  - **Conditional là các guard bắt buộc:** nếu phát hiện sao chép nguyên văn slide (`is_parroting`) hoặc lạm dụng thuật ngữ chuyên ngành lấp liếm (`unexplained_buzzwords`), AI yêu cầu diễn đạt lại bằng ngôn từ đơn giản; nếu không tìm thấy căn cứ trong transcript, AI nói “chưa đủ căn cứ”; nếu lời giải thích khác câu chữ tài liệu nhưng đúng bản chất nhân quả (`has_causal_reasoning`), AI không đánh dấu sai; nếu học viên đòi đáp án ngay, AI giữ đúng vai người học và từ chối cung cấp đáp án.
+  - **Cost-of-error:** false positive (đánh dấu sai một lời giải thích đúng) làm học viên mất tin và sửa kiến thức đúng; false negative (xác nhận một giải thích sai) nguy hiểm hơn vì học viên có thể rời phiên với hiểu biết sai mà không nhận ra. Vì vậy AI không tự chốt điểm, phải nêu citation/lý do, giới hạn số câu hỏi, và chuyển sang trạng thái cần đào sâu (`SOCRATIC_PROBING`) khi chưa đủ căn cứ thay vì vội vàng mở khóa node (`is_mastered`). Giảng viên vẫn là người duyệt rubric cuối cùng.
 
 - **§4b. Nguyên tắc đã áp dụng (HAX/PAIR):**
   | Nguyên tắc | Áp cụ thể vào đâu trong prototype |
