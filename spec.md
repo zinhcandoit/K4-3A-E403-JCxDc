@@ -2,7 +2,6 @@
 
 > Cấu trúc phủ đúng "SPEC 8 phần" của chương trình: Bằng chứng (§1-§2) · Lát cắt (§4) · Canvas (đính kèm CP1) · Augment/Automate (§4) · 4 đường đi của trải nghiệm (§6) · Kiểu lỗi (§5) · Kiểm thử (§7) · Phân công (§8). Hướng dẫn viết từng mục: `02-guide.md`.
 
-```markdown
 # AI SPEC — Protégé Socratic Agent ("Alex") · Nhóm JCxDc · Zone 4
 Hướng: [x] A — VLearn  [ ] B — Trợ lý Học viên  [ ] C — Làn mở
 Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
@@ -105,14 +104,14 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 - **§4b. Nguyên tắc đã áp dụng (HAX/PAIR):**
   | Nguyên tắc | Áp cụ thể vào đâu trong prototype |
   |---|---|
-  | **G1 — Làm rõ hệ thống làm được gì** | Màn hình bắt đầu nói rõ: agent là học trò luyện tập, chỉ kiểm tra một khái niệm dựa trên transcript/slide đã chọn; agent không phải giảng viên, không chấm điểm chính thức và không trả lời thay. Có một ví dụ input để học viên bắt đầu. Kiểm bằng `D3-scope-01`. |
-  | **G2 — Làm rõ nó làm tốt đến đâu** | Hiển thị nguồn đối chiếu và nhãn `có căn cứ`, `chưa đủ căn cứ` hoặc `ngoài phạm vi`; thông báo rằng AI có thể bỏ sót cách diễn đạt đúng nhưng khác câu chữ tài liệu. Không dùng điểm confidence giả nếu chưa có cách hiệu chuẩn. Kiểm bằng `D3-source-01` và `D3-paraphrase-01`. |
-  | **G4 — Hiện thông tin đúng ngữ cảnh** | Mỗi phản hồi chỉ trích đoạn transcript/slide liên quan đến claim đang kiểm tra, kèm mã đoạn/trang; không đưa toàn bộ chương hoặc nguồn ngoài fixture vào câu hỏi ngược. Kiểm bằng `D3-citation-01`. |
-  | **G8 — Gạt bỏ dễ dàng** | Học viên có thể bỏ qua câu hỏi gợi ý, sửa lời giải thích hoặc bắt đầu lượt mới mà không bị khóa flow và không mất bản nháp hiện tại. Kiểm bằng `D3-skip-01`. |
-  | **G9 — Sửa dễ dàng** | Lời giải thích vẫn nằm trong ô nhập liệu để học viên chỉnh một claim hoặc ví dụ rồi gửi lại; không bắt viết lại toàn bộ và không tự ghi đè bản trước. Kiểm bằng `D3-correction-01`. |
-  | **G10 — Thu hẹp phạm vi khi nghi ngờ** | Khi input thiếu chủ thể, chỉ có một câu rời, đổi sang chủ đề khác hoặc không có căn cứ trong fixture, AI hỏi một câu làm rõ hoặc từ chối có hướng dẫn xem lại nguồn; tuyệt đối không đoán cho đủ câu trả lời. Kiểm bằng `D3-ambiguous-01`, `D3-out-of-scope-01` và `D3-no-source-01`. |
-  | **G11 — Giải thích vì sao** | Mỗi câu hỏi ngược nêu claim đang thiếu điều gì: định nghĩa, quan hệ nguyên nhân-kết quả hay ví dụ; ngay cạnh đó hiển thị citation để học viên biết vì sao cần sửa và nên xem lại ở đâu. Kiểm bằng `D3-why-01`. |
-  | **PAIR — Giữ người học trong vòng kiểm soát** | Agent chỉ đề xuất câu hỏi và đoạn nguồn; học viên quyết định có sửa, bỏ qua hay xem lại tài liệu. Trạng thái cuối được trình bày là tín hiệu luyện tập, không phải phán quyết về năng lực hay điểm số. Kiểm bằng `D3-answer-demand-01` và `D3-correction-01`. |
+  | **G1 — Làm rõ hệ thống làm được gì** | Màn hình bắt đầu nói rõ: agent là học trò luyện tập, chỉ kiểm tra một khái niệm dựa trên transcript/slide đã chọn; agent không phải giảng viên, không chấm điểm chính thức và không trả lời thay. Có một ví dụ input để học viên bắt đầu. Kiểm bằng `TC05`, `TC06`. |
+  | **G2 — Làm rõ nó làm tốt đến đâu** | Hiển thị nguồn đối chiếu và nhãn `có căn cứ`, `chưa đủ căn cứ` hoặc `ngoài phạm vi`; thông báo rằng AI có thể bỏ sót cách diễn đạt đúng nhưng khác câu chữ tài liệu. Không dùng điểm confidence giả nếu chưa có cách hiệu chuẩn. Kiểm bằng `TC01`, `TC02`. |
+  | **G4 — Hiện thông tin đúng ngữ cảnh** | Mỗi phản hồi chỉ trích đoạn transcript/slide liên quan đến claim đang kiểm tra, kèm mã đoạn/trang; không đưa toàn bộ chương hoặc nguồn ngoài fixture vào câu hỏi ngược. Kiểm bằng `TC14`, `TC17`. |
+  | **G8 — Gạt bỏ dễ dàng** | Học viên có thể bỏ qua câu hỏi gợi ý, sửa lời giải thích hoặc bắt đầu lượt mới mà không bị khóa flow và không mất bản nháp hiện tại. Kiểm bằng `TC18`. |
+  | **G9 — Sửa dễ dàng** | Lời giải thích vẫn nằm trong ô nhập liệu để học viên chỉnh một claim hoặc ví dụ rồi gửi lại; không bắt viết lại toàn bộ và không tự ghi đè bản trước. Kiểm bằng `TC10`, `TC11`. |
+  | **G10 — Thu hẹp phạm vi khi nghi ngờ** | Khi input thiếu chủ thể, chỉ có một câu rời, đổi sang chủ đề khác hoặc không có căn cứ trong fixture, AI hỏi một câu làm rõ hoặc từ chối có hướng dẫn xem lại nguồn; tuyệt đối không đoán cho đủ câu trả lời. Kiểm bằng `TC03`, `TC04`, `TC19`. |
+  | **G11 — Giải thích vì sao** | Mỗi câu hỏi ngược nêu claim đang thiếu điều gì: định nghĩa, quan hệ nguyên nhân-kết quả hay ví dụ; ngay cạnh đó hiển thị citation để học viên biết vì sao cần sửa và nên xem lại ở đâu. Kiểm bằng `TC07`, `TC08`. |
+  | **PAIR — Giữ người học trong vòng kiểm soát** | Agent chỉ đề xuất câu hỏi và đoạn nguồn; học viên quyết định có sửa, bỏ qua hay xem lại tài liệu. Trạng thái cuối được trình bày là tín hiệu luyện tập, không phải phán quyết về năng lực hay điểm số. Kiểm bằng `TC05`, `TC20`. |
 
 **Giả định cần kiểm chứng sau khi build:** (1) tối đa hai câu hỏi ngược đủ để làm lộ lỗ hổng mà không biến phiên thành bài thi; (2) học viên chấp nhận vai trò “dạy cho agent” và không chỉ dán nguyên văn tài liệu; (3) rubric ba tiêu chí phân biệt được diễn đạt khác nguồn nhưng đúng với giải thích sai; (4) sau phiên, học viên có thể trả lời câu hậu kiểm hoặc đưa ví dụ mới tốt hơn trước phiên. Các giả định này sẽ được đo bằng golden set và validation với ít nhất 5 học viên, không được coi là kết quả đã chứng minh trong spec.
 
@@ -149,7 +148,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 - Kết quả các lượt chạy:
   | Lượt chạy | Thời điểm | % Đạt | Số case đạt | Lỗi điển hình | Hướng xử lý |
   |---|---|---|---|---|---|
-  | Lượt 1 | 20:30 17/9 (CP4) | 15% | 3/20 | Model không sinh ra được hết câu (bị ngắt cụt giữa chừng) | Tăng max_tokens lên |
+  | Lượt 1 | 20h30 17/9 | 15% | 3/20 | Model không sinh ra được hết câu | Tăng max_tokens lên |
 
 ## §8. Phân công & kế hoạch
 - Phân công có tên:
@@ -166,5 +165,4 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 |---|---|---|
 | 16/9 19:15 | Chốt hướng Track D3 và bảng Canvas | Thống nhất tập trung giải quyết việc học viên tưởng mình hiểu nhưng không giải thích được |
 | 16/9 21:00 | Chốt luồng trải nghiệm 4 bước và mức tự động hóa conditional | Tránh để AI tự động giảng giải thay vì buộc học viên phải tự nói |
-| 17/9 20:30 | Chạy kiểm thử Lượt 1 (đạt 3/20 case) | Phát hiện lỗi model không sinh hết câu, quyết định tăng max_tokens |
-```
+| 17/9 20h30 | Chạy kiểm thử Lượt 1 (đạt 3/20) | Lỗi: model không sinh ra được hết câu, hướng xử lý: tăng max_tokens lên |
