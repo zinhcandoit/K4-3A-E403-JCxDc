@@ -13,12 +13,17 @@
      - `codebase/db/input/*.pdf`: Thích ứng với bất kỳ file PDF nào được đưa vào, tự động phân chia các nhánh chuyên đề động và trích xuất tiêu đề slide trực tiếp.
    - Tuyệt đối không dùng kịch bản tĩnh, không dùng file JSON tự tạo, không dùng danh sách từ khóa lọc cứng.
 
-2. **LLM-as-a-Judge với `with_structured_output()` & Pydantic**:
-   - Sử dụng `langchain_google_genai` kết hợp Pydantic Schema `PedagogicalEvaluation` và hàm `with_structured_output()` trên duy nhất model `gemma-4-26b-a4b-it` (không fallback, kèm `ThinkingLevel.MINIMAL` và `max_output_tokens=1024`):
-     - **Binary Classification** `is_parroting`: Phát hiện sao chép nguyên văn tài liệu/slide.
+2. **Giám Định Sư Phạm 8 Tiêu Chí với ChatNVIDIA (`nvidia/nemotron-3.5-lightning-30b-a3b`)**:
+   - Sử dụng `ChatNVIDIA` từ `langchain_nvidia_ai_endpoints` kết hợp Pydantic Schema `PedagogicalEvaluation`:
+     - **Binary Classification** `is_parroting`: Phát hiện sao chép nguyên văn tài liệu/slide qua n-gram overlap.
      - **Multi-label Classification** `unexplained_buzzwords`: Chỉ ra các thuật ngữ kỹ thuật bị lạm dụng để lấp liếm mà chưa làm rõ cơ chế.
      - **Binary Classification** `has_causal_reasoning`: Đánh giá lập luận chuỗi nguyên nhân - kết quả ("tại sao", "cơ chế vì sao").
+     - **Binary Classification** `has_concrete_example`: Kiểm tra ví dụ thực tế hoặc so sánh đời thường.
+     - **Binary Classification** `factual_contradiction`: Phát hiện ngộ nhận trái ngược với bản chất bài giảng (§5 ①).
+     - **Binary Classification** `is_out_of_scope`: Ngăn chặn hỏi lệch đề hoặc đòi đáp án quiz (§5 ③).
+     - **Binary Classification** `is_self_correction`: Nhận diện học viên tự sửa lỗi logic.
      - **Binary Classification** `is_mastered`: Quyết định mở khóa đồ thị khi người học chứng minh được sự thấu suốt bản chất theo chuẩn Feynman.
+   - Giới hạn tần suất: Quản lý qua `NVIDIARateLimiter` toàn cục (36 RPM), tự động exponential backoff khi gặp lỗi 429.
 
 3. **Bộ nhớ Hội thoại 2 Dạng (Dual-Form Conversation Memory)**:
    - **Dạng 1 (Sliding Window)**: Lưu và duy trì **6 lượt Ask - Answer gần nhất** để Agent kế thừa ngữ cảnh hội thoại mượt mà, không hỏi lặp lại.
@@ -38,9 +43,8 @@
 
 ```text
 codebase/
-├── run_all.py                  # Script 1-click khởi động cả FastAPI Backend & Streamlit
 ├── pyproject.toml              # Quản lý dependencies qua uv
-├── .env                        # Biến môi trường (GEMINI_API_KEY, FALKOR_HOST, v.v.)
+├── .env                        # Biến môi trường (NVIDIA_API_KEY, FALKOR_HOST, v.v.)
 │
 ├── ui/
 │   ├── app.py                  # Frontend Streamlit (Giao diện ChatGPT Dark Mode)
@@ -50,10 +54,12 @@ codebase/
 ├── backend/
 │   ├── main.py                 # FastAPI Backend REST API
 │   ├── agent_engine.py         # Socratic Protégé Agent Engine (Track D3 Core)
-│   ├── guardrails.py           # LLM-as-a-Judge với LangChain with_structured_output()
+│   ├── guardrails.py           # Giám định sư phạm 8 tiêu chí Feynman với ChatNVIDIA
 │   ├── memory.py               # Dual-Form Conversation Memory (Sliding Window + Global Summary)
-│   ├── prompt.py               # Persona Alex (Socratic Peer Learner) súc tích, không emoji
-│   └── google_genai_client.py  # Client chính thức kết nối google-genai SDK
+│   ├── prompt.py               # Persona Alex (Socratic Peer Learner) bám sát 4 lớp chỗ khó
+│   └── nvidia_client.py        # Client ChatNVIDIA chính thức kết nối NVIDIA NIM
+├── config/
+│   └── config.py               # Cấu hình toàn cục tập trung (NVIDIA Model, siêu tham số, FalkorDB)
 │
 ├── db/
 │   ├── data_loader.py          # Bóc tách 100% dữ liệu thực tế từ transcript & PDF
@@ -97,8 +103,8 @@ cd codebase
 
 Tạo file `.env` với nội dung sau:
 ```env
-# Google GenAI / Gemini API Key
-GEMINI_API_KEY=AIzaSy...your_gemini_api_key...
+# NVIDIA NIM / AI Endpoints API Key (Bắt buộc cho ChatNVIDIA)
+NVIDIA_API_KEY=nvapi-...your_nvidia_api_key...
 
 # Cấu hình FalkorDB
 FALKOR_HOST=localhost
@@ -113,7 +119,7 @@ BACKEND_URL=http://localhost:8000
 
 ### Bước 3: Cài Đặt Dependencies Tự Động Qua `uv`
 
-Chỉ cần chạy lệnh sau trong thư mục `codebase/`, `uv` sẽ tự động tạo virtual environment và cài đặt đầy đủ các thư viện (`fastapi`, `streamlit`, `falkordb`, `langchain-google-genai`, `google-genai`, `pymupdf`, v.v.):
+Chỉ cần chạy lệnh sau trong thư mục `codebase/`, `uv` sẽ tự động tạo virtual environment và cài đặt đầy đủ các thư viện (`fastapi`, `streamlit`, `falkordb`, `langchain-nvidia-ai-endpoints`, `pymupdf`, v.v.):
 
 ```bash
 uv sync
@@ -136,51 +142,66 @@ docker ps
 
 ---
 
-### Bước 5: Nạp Đồ Thị Tri Thức Từ Dữ Liệu Thực Tế
+### Bước 5: Nạp Đồ Thị Tri Thức Cục Bộ (Knowledge Locality)
 
-Chạy script nạp đồ thị để bóc tách dữ liệu từ `data/vlearn-pack/transcript/*.md` và `codebase/db/input/*.pdf` vào FalkorDB:
+> **Nguyên tắc bảo toàn tính cục bộ:** Mỗi file bài giảng (slide PDF hoặc markdown transcript) là một không gian tri thức độc lập. Các liên kết `PREREQUISITE_FOR` chỉ được tạo nội bộ trong cùng 1 file, tuyệt đối không nối chéo giữa các file khác nhau để tránh làm mô hình bị phân tâm hoặc chuyển sang vùng kiến thức khác biệt.
+
+Chạy script nạp đồ thị cho tài liệu bài giảng:
 
 ```bash
+# Di chuyển vào thư mục codebase:
+cd codebase
+
+# Chạy nạp đồ thị cho bài giảng mặc định (tự động quét):
 uv run python db/build_graph.py
+
+# Hoặc tùy chọn chỉ định file bài giảng cụ thể:
+uv run python db/build_graph.py --file <ten_file_bai_giang>
+
+# Hoặc nạp tất cả file thành các track độc lập riêng biệt:
+uv run python db/build_graph.py --all
 ```
 
 *Kết quả mong đợi trên màn hình console:*
 ```text
+======================================================================
+🚀 BẮT ĐẦU KHỞI TẠO ĐỒ THỊ CỤC BỘ (KNOWLEDGE LOCALITY)
+📄 Tài liệu mục tiêu: 'transcript-04-clean.md'
+🎯 Nguyên tắc: Chỉ tạo liên kết nội bộ trong file, tuyệt đối không trộn file!
+======================================================================
 🗑️ Đã làm sạch graph: 'VLearn_Knowledge_Graph'
-🚀 Bắt đầu nạp toàn bộ dữ liệu thực tế vào FalkorDB...
-✅ Đã trích xuất thành công 8 khái niệm mục tiêu từ transcript thực tế.
-📄 Đang đọc file PDF thực tế: fsdl-2022-lecture2-development-infrastructure-and-tooling.pdf...
-📊 Đã trích lọc 3 khái niệm chuyên đề từ 127 slide thực tế.
-🎉 Nạp dữ liệu thực tế vào FalkorDB hoàn tất 100%!
+✅ Đã trích xuất các khái niệm mục tiêu từ file transcript (tính cục bộ độc lập).
+🔗 Đã tạo các liên kết PREREQUISITE_FOR nội bộ trong file.
+🎉 Khởi tạo đồ thị tri thức cục bộ hoàn tất 100%!
 ```
 
 ---
 
-### Bước 6: Khởi Chạy Toàn Bộ Hệ Thống với 1 Lệnh Duy Nhất
+### Bước 6: Khởi Chạy Hệ Thống (Backend & Frontend)
 
-Chỉ cần thực thi script `run_all.py`, hệ thống sẽ đồng thời khởi động cả **FastAPI Backend (port 8000)** và **Streamlit Frontend (port 8501)**:
+Hệ thống bao gồm **FastAPI Backend (port 8000)** và **Streamlit Frontend (port 8501)**. Bạn có thể mở 2 terminal để chạy song song:
 
+#### 1. Terminal 1: Khởi động FastAPI Backend
 ```bash
-uv run python run_all.py
+# Di chuyển vào thư mục codebase:
+cd codebase
+
+# Khởi chạy Backend server:
+uv run python backend/main.py
+# Hoặc khởi chạy qua uvicorn:
+# uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+*Backend sẽ sẵn sàng lắng nghe tại `http://localhost:8000` (Swagger UI: `http://localhost:8000/docs`).*
 
-*Console sẽ hiển thị:*
-```text
-=================================================================
-🚀 KHỞI ĐỘNG HỆ THỐNG VLEARN TRACK D3 (FALKORDB + FASTAPI + STREAMLIT)
-=================================================================
-📦 1. Kiểm tra FalkorDB (port 6379)...
-   ✅ FalkorDB Docker container đang hoạt động bình thường!
+#### 2. Terminal 2: Khởi động Streamlit Frontend
+```bash
+# Di chuyển vào thư mục codebase:
+cd codebase
 
-⚡ 2. Khởi động FastAPI Backend tại http://localhost:8000 ...
-
-🖥️ 3. Khởi động Streamlit Frontend tại http://localhost:8501 ...
-
-🎉 HỆ THỐNG ĐÃ SẴN SÀNG:
-👉 Streamlit UI : http://localhost:8501
-👉 FastAPI Docs : http://localhost:8000/docs
-👉 Nhấn Ctrl+C để dừng toàn bộ hệ thống.
+# Khởi chạy giao diện Streamlit:
+uv run streamlit run ui/app.py --server.port 8501
 ```
+*Giao diện người dùng sẽ tự động mở tại `http://localhost:8501`.*
 
 ---
 

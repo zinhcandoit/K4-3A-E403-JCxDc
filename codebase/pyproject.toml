@@ -5,7 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "falkordb>=1.7.1",
+    "fastapi>=0.141.1",
     "google-genai>=2.23.0",
+    "httpx>=0.28.1",
+    "langchain-google-genai>=4.4.0",
+    "langchain-nvidia-ai-endpoints>=1.4.3",
+    "openai>=3.14.1",
+    "pymupdf>=1.28.2",
+    "pypdf>=6.19.0",
     "python-dotenv>=1.2.3",
     "streamlit>=1.64.0",
+    "uvicorn>=0.53.0",
 ]
