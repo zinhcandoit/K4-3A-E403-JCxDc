@@ -11,6 +11,7 @@ dependencies = [
     "httpx>=0.28.1",
     "langchain-google-genai>=4.4.0",
     "langchain-nvidia-ai-endpoints>=1.4.3",
+    "nvidia-riva-client>=2.27.0",
     "openai>=3.14.1",
     "pymupdf>=1.28.2",
     "pypdf>=6.19.0",

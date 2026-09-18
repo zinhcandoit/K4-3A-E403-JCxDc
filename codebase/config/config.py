@@ -3,109 +3,99 @@ import re
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Root directory of codebase
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
 def clean_lesson_title(raw_title: str) -> str:
-    """
-    Chuẩn hoá tiêu đề bài học hiển thị trên UI:
-    - Loại bỏ tiền tố: 'Transcript bài giảng (bản sạch) — Day 2 — ...'
-    - Loại bỏ hậu tố: '(phần sau buổi)', '(phần đầu buổi)', '(phần...)'
-    """
     if not raw_title:
         return ""
     title = raw_title.strip()
-    # 1. Bỏ dấu markdown heading, icon và nhãn Slide nếu có
     title = re.sub(r"^[#📘📑\s]+(?:Slide:\s*)?", "", title, flags=re.IGNORECASE)
-
-    # 2. Loại bỏ tiền tố hành chính dạng:
-    # "Transcript bài giảng (bản sạch) — Day 2 — ..." hoặc "Transcript bài giảng — Day 1 — ..."
     title = re.sub(
         r"^Transcript\s+bài\s+giảng\s*(?:\([^)]*\))?\s*[-—–:]?\s*(?:(?:Day|Buổi|Bài)\s*\d+\s*[-—–:.]?)?\s*",
         "",
         title,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
-    # Loại bỏ nếu chỉ có tiền tố "Day X — " hoặc "Buổi X — "
     title = re.sub(r"^(?:Day|Buổi|Bài)\s*\d+\s*[-—–:.]\s*", "", title, flags=re.IGNORECASE)
-
-    # 3. Loại bỏ hậu tố: "(phần sau buổi)", "(phần đầu buổi)", "(phần ...)"
     title = re.sub(r"\s*\([^)]*(?:phần|part)\s*[^)]*\)\s*$", "", title, flags=re.IGNORECASE)
     title = re.sub(r"\s*\(phần\s+(?:sau|đầu)\s+buổi\)\s*$", "", title, flags=re.IGNORECASE)
     title = re.sub(r"\s*[-—–:]\s*$", "", title)
-
     return title.strip()
 
 
 class Config:
-    """
-    Centralized configuration manager for VLearn Track D3 (Protégé Socratic Agent):
-    - Single source of truth for ChatNVIDIA, FalkorDB, memory, and file paths.
-    - Preserves knowledge locality per independent document track.
-    """
-
-    # Core data directories
+    # Directories
     BASE_DIR = BASE_DIR
     DB_DIR = BASE_DIR / "db"
     INPUT_DIR = DB_DIR / "input"
     LOGS_DIR = DB_DIR / "logs"
     CHAT_HISTORY_FILE = DB_DIR / "chat_history.json"
-    VLEARN_DATA_DIR = BASE_DIR.parent / "data" / "vlearn-pack"
-    TRANSCRIPT_DIR = VLEARN_DATA_DIR / "transcript"
+    TRANSCRIPT_DIR = BASE_DIR.parent / "data" / "vlearn-pack" / "transcript"
 
-    # Active document track configuration
-    ACTIVE_DOCUMENT = os.getenv("ACTIVE_DOCUMENT", "")
-    ACTIVE_TRACK = os.getenv("ACTIVE_TRACK", "")
+    # API Keys (only credentials from .env)
+    NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
+    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+
+    # NVIDIA NIM LLM Settings
+    NVIDIA_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b"
+    NVIDIA_MAX_TOKENS = 16384
+    NVIDIA_REASONING_BUDGET = 4096
+    NVIDIA_TEMPERATURE = 0.2
+    NVIDIA_TOP_P = 0.95
+    NVIDIA_ENABLE_THINKING = True
+    MAX_RPM = 36
+
+    # Pedagogical & Graph Settings
+    MAX_PROBING_TURNS = 2
+    SLIDING_WINDOW_LIMIT = 6
+    FALKOR_HOST = "localhost"
+    FALKOR_PORT = 6379
+    GRAPH_NAME = "VLearn_Knowledge_Graph"
+    LLM_TIMEOUT = 60.0
+
+    ACTIVE_DOCUMENT = ""
+    ACTIVE_TRACK = ""
 
     @classmethod
     def get_available_lessons(cls) -> list:
-        """
-        Dynamically scan available lesson materials from data directories without hardcoding names.
-        Preserves data privacy and zero data leakage in source code.
-        """
         lessons = []
         if cls.TRANSCRIPT_DIR.exists():
-            for transcript_path in sorted(cls.TRANSCRIPT_DIR.glob("*.md")):
-                if transcript_path.name.lower() == "readme.md":
+            for p in sorted(cls.TRANSCRIPT_DIR.glob("*.md")):
+                if p.name.lower() == "readme.md":
                     continue
-                # Extract clean title from document header or filename stem
-                title = transcript_path.stem.replace("-", " ").replace("_", " ").title()
+                title = p.stem.replace("-", " ").replace("_", " ").title()
                 try:
-                    for line in transcript_path.read_text(encoding="utf-8", errors="ignore").splitlines()[:10]:
+                    for line in p.read_text(encoding="utf-8", errors="ignore").splitlines()[:10]:
                         clean_line = line.strip()
                         if clean_line.startswith("# ") and len(clean_line) > 3:
                             title = clean_lesson_title(clean_line)
                             break
                 except Exception:
                     pass
-
                 lessons.append({
-                    "id": transcript_path.stem,
-                    "filename": transcript_path.name,
+                    "id": p.stem,
+                    "filename": p.name,
                     "title": f"📘 {title}",
                     "type": "transcript",
-                    "track": transcript_path.stem
+                    "track": p.stem,
                 })
 
         if cls.INPUT_DIR.exists():
-            for pdf_file in sorted(cls.INPUT_DIR.glob("*.pdf")):
-                slide_title = clean_lesson_title(pdf_file.stem.replace('_', ' ').title())
+            for p in sorted(cls.INPUT_DIR.glob("*.pdf")):
+                slide_title = clean_lesson_title(p.stem.replace("_", " ").title())
                 lessons.append({
-                    "id": f"slide_{pdf_file.stem}",
-                    "filename": pdf_file.name,
+                    "id": f"slide_{p.stem}",
+                    "filename": p.name,
                     "title": f"📑 Slide: {slide_title}",
                     "type": "pdf",
-                    "track": f"slide_{pdf_file.stem}"
+                    "track": f"slide_{p.stem}",
                 })
-
-
         return lessons
 
     @classmethod
     def get_default_track(cls) -> str:
-        """Lấy track mặc định tự động mà không hardcode"""
         if cls.ACTIVE_TRACK:
             return cls.ACTIVE_TRACK
         lessons = cls.get_available_lessons()
@@ -113,43 +103,10 @@ class Config:
 
     @classmethod
     def get_default_document(cls) -> str:
-        """Lấy document mặc định tự động mà không hardcode"""
         if cls.ACTIVE_DOCUMENT:
             return cls.ACTIVE_DOCUMENT
         lessons = cls.get_available_lessons()
         return lessons[0]["filename"] if lessons else ""
-
-    # NVIDIA LLM CONFIG (DUY NHẤT, KHÔNG FALLBACK GEMINI)
-    NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b")
-
-    # max_tokens = 8196: Đảm bảo trần token rộng rãi cho cả quá trình suy luận và câu trả lời hoàn chỉnh
-    NVIDIA_MAX_TOKENS = int(os.getenv("NVIDIA_MAX_TOKENS", 16384))
-    # reasoning_budget = 512 đủ cho suy nghĩ ngầm nhận diện lỗ hổng mà không gây trễ
-    NVIDIA_REASONING_BUDGET = int(os.getenv("NVIDIA_REASONING_BUDGET", 4096))
-    # temperature = 0.35: Precise (chính xác bám sát transcript, không bịa), đủ nhạy để hỏi ngược
-    NVIDIA_TEMPERATURE = float(os.getenv("NVIDIA_TEMPERATURE", 0.1))
-    # top_p = 0.85: Loại bỏ token ngẫu nhiên, tập trung từ vựng kỹ thuật cốt lõi
-    NVIDIA_TOP_P = float(os.getenv("NVIDIA_TOP_P", 0.85))
-    # enable_thinking = True: Kích hoạt reasoning_content từ Nemotron
-    NVIDIA_ENABLE_THINKING = True
-    # GIỚI HẠN TẦN SUẤT NVIDIA (RPM LIMIT = 40)
-    MAX_RPM = int(os.getenv("MAX_RPM", 36))  # 36 RPM an toàn dưới ngưỡng cứng 40
-
-    # QUY TẮC SƯ PHẠM SOCRATIC (TRACK D3 · FEYNMAN TECHNIQUE · SPEC.MD)
-    MAX_PROBING_TURNS = int(os.getenv("MAX_PROBING_TURNS", 2))   # Tối đa 2 câu hỏi ngược cho 1 concept (§4)
-    SLIDING_WINDOW_LIMIT = int(os.getenv("SLIDING_WINDOW_LIMIT", 6))  # 6 lượt Ask - Answer gần nhất
-
-    # CẤU HÌNH FALKORDB (GRAPH DATABASE)
-    FALKOR_HOST = os.getenv("FALKOR_HOST", "localhost")
-    FALKOR_PORT = int(os.getenv("FALKOR_PORT", 6379))
-    GRAPH_NAME = os.getenv("GRAPH_NAME", "VLearn_Knowledge_Graph")
-
-    # DỊCH VỤ PHỤ TRỢ (NẾU CÓ)
-    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
-
-    # TIMEOUT KIỂM SOÁT
-    LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", 60.0))
 
 
 settings = Config()

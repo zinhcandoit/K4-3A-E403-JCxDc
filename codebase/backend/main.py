@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,6 +13,7 @@ if base_dir not in sys.path:
 
 from config.config import settings
 from backend.agent_engine import SocraticAgentEngine
+from backend.voice_model import transcribe_audio
 
 app = FastAPI(
     title="VLearn Track D3 Socratic Engine",
@@ -144,6 +145,23 @@ def reset_progress(session_id: str = "default_session", track: Optional[str] = N
         engine.graph_service.reset_all_progress()
     engine.clear_session_history(session_id)
     return {"status": "success", "message": "Đã đặt lại tiến độ đồ thị và bộ nhớ hội thoại"}
+
+
+@app.post("/api/transcribe")
+async def transcribe_endpoint(request: Request):
+    """Transcribe audio with NVIDIA Riva ASR."""
+    try:
+        audio_bytes = await request.body()
+        if not audio_bytes:
+            print("⚠️ [FastAPI /api/transcribe] Dữ liệu âm thanh rỗng")
+            return {"status": "error", "text": "", "detail": "Empty audio data"}
+        print(f"🎙️ [FastAPI /api/transcribe] Đang xử lý {len(audio_bytes)} bytes audio từ trình duyệt...")
+        text = transcribe_audio(audio_bytes)
+        print(f"✅ [FastAPI /api/transcribe] Kết quả ASR: '{text}'")
+        return {"status": "success", "text": text}
+    except Exception as e:
+        print(f"❌ [FastAPI /api/transcribe] Lỗi: {e}")
+        return {"status": "error", "text": "", "detail": str(e)}
 
 
 if __name__ == "__main__":

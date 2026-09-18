@@ -34,55 +34,22 @@ class SocraticAgentEngine:
     """
 
     def __init__(self):
-        self.graph_service = GraphService(
-            host=settings.FALKOR_HOST,
-            port=settings.FALKOR_PORT,
-            graph_name=settings.GRAPH_NAME
-        )
+        try:
+            self.graph_service = GraphService(
+                host=settings.FALKOR_HOST,
+                port=settings.FALKOR_PORT,
+                graph_name=settings.GRAPH_NAME
+            )
+        except Exception as e:
+            print(f"ℹ️ FalkorDB offline ({e}), using local data fallback.")
+            self.graph_service = None
         self.nvidia_client = NvidiaAIClient()
         self.guardrails = TrackD3Guardrails(nvidia_client=self.nvidia_client)
         self.memory = SimpleConversationMemory()
         self.data_loader = RealDataLoader()
         self.concept_turns: Dict[str, int] = {}
+        self._concept_cache: Dict[str, Dict[str, Any]] = {}
         print(f"✅ SocraticAgentEngine (ChatNVIDIA: {settings.NVIDIA_MODEL}) initialized successfully.")
-
-    def generate_topic_intro_directions(self, concept_node: Dict[str, Any]) -> List[str]:
-        """
-        Tạo danh sách 3 hướng gợi ý mở đầu cho học viên tự do lựa chọn cách tiếp cận:
-        Ưu tiên trích xuất từ 4 điểm mù đồ thị FalkorDB (Cơ chế, Đánh đổi, Ngộ nhận, Ví dụ thực tế).
-        """
-        concept_id = concept_node.get("id", "")
-        concept_name = concept_node.get("name", "chủ đề này")
-        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id)
-
-        directions = []
-
-        # Hướng 1: Cơ chế & Bản chất
-        mechanism_info = pedagogical_context.get("mechanism") if pedagogical_context else None
-        if mechanism_info and mechanism_info.get("name"):
-            directions.append(f"Cơ chế cốt lõi: Giải thích cách thức vận hành hoặc {mechanism_info['name']}")
-        else:
-            directions.append(f"Bản chất cốt lõi: Bạn hiểu thế nào về khái niệm và nguyên lý vận hành của {concept_name}?")
-
-        # Hướng 2: Sự đánh đổi (Trade-off) hoặc Thách thức kỹ thuật
-        tradeoff_info = pedagogical_context.get("tradeoff") if pedagogical_context else None
-        if tradeoff_info and tradeoff_info.get("dimension_a") and tradeoff_info.get("dimension_b"):
-            directions.append(f"Sự đánh đổi kỹ thuật: Bài toán cân đối giữa {tradeoff_info['dimension_a']} và {tradeoff_info['dimension_b']}")
-        else:
-            directions.append(f"Thách thức thực tế: Những khó khăn hoặc sự đánh đổi kỹ thuật lớn nhất khi áp dụng {concept_name}")
-
-        # Hướng 3: Cạm bẫy ngộ nhận hoặc Ví dụ thực tế
-        misconception_info = pedagogical_context.get("misconception") if pedagogical_context else None
-        counter_example_info = pedagogical_context.get("counter_example") if pedagogical_context else None
-
-        if misconception_info and misconception_info.get("name"):
-            directions.append(f"Cạm bẫy ngộ nhận: Những sai lầm hoặc hiểu chưa đúng phổ biến về {misconception_info['name']}")
-        elif counter_example_info and counter_example_info.get("name"):
-            directions.append(f"Tình huống thực tế: Phân tích ví dụ cụ thể hoặc trường hợp biên ({counter_example_info['name']})")
-        else:
-            directions.append(f"Ví dụ minh họa: Nêu một ví dụ đời thường hoặc tình huống thực tế mà bạn thấy rõ nhất về {concept_name}")
-
-        return directions[:3]
 
     def generate_smart_opening_question(self, concept_name: str, quote_text: str = "", core_truth: str = "") -> str:
         """Generate focused opening question targeting technical trade-offs using ChatNVIDIA."""
@@ -129,74 +96,83 @@ class SocraticAgentEngine:
         # Safe fallback aligned with core concept pedagogy
         return f"Theo bạn, thách thức kỹ thuật lớn nhất và sự đánh đổi cần cân nhắc khi triển khai {concept_name} là gì?"
 
-    def get_current_feynman_concept(self) -> Dict[str, Any]:
+    def get_current_feynman_concept(self, force_refresh: bool = False) -> Dict[str, Any]:
         """Retrieve the active concept node from FalkorDB preserving local track context."""
-        active_track = self.graph_service.current_track
-        try:
-            # 1. Look for next uncovered concept within the active track
-            query_result = self.graph_service.graph.query(f"""
-            MATCH (fc:FeynmanConcept {{status: 'UNCOVERED', track: '{active_track}'}})
-            RETURN fc.id, fc.name, fc.citation, fc.core_truth, fc.child_question, fc.quote_text, fc.learning_question, fc.track
-            ORDER BY fc.order
-            LIMIT 1
-            """)
-            if not query_result.result_set:
-                # 2. If all covered, retrieve by track to maintain topical locality
+        active_track = self.graph_service.current_track if self.graph_service else settings.get_default_track()
+        if not force_refresh and active_track in self._concept_cache:
+            return self._concept_cache[active_track]
+
+        res = None
+        if self.graph_service:
+            try:
+                # 1. Look for next uncovered concept within the active track
                 query_result = self.graph_service.graph.query(f"""
-                MATCH (fc:FeynmanConcept {{track: '{active_track}'}})
+                MATCH (fc:FeynmanConcept {{status: 'UNCOVERED', track: '{active_track}'}})
                 RETURN fc.id, fc.name, fc.citation, fc.core_truth, fc.child_question, fc.quote_text, fc.learning_question, fc.track
                 ORDER BY fc.order
                 LIMIT 1
                 """)
+                if not query_result.result_set:
+                    # 2. If all covered, retrieve by track to maintain topical locality
+                    query_result = self.graph_service.graph.query(f"""
+                    MATCH (fc:FeynmanConcept {{track: '{active_track}'}})
+                    RETURN fc.id, fc.name, fc.citation, fc.core_truth, fc.child_question, fc.quote_text, fc.learning_question, fc.track
+                    ORDER BY fc.order
+                    LIMIT 1
+                    """)
 
-            if query_result.result_set:
-                concept_record = query_result.result_set[0]
-                question_text = concept_record[6] if len(concept_record) > 6 and concept_record[6] else concept_record[4]
-                if not question_text or "lại vận hành như vậy" in question_text or "Cơ chế cốt lõi và nguyên nhân" in question_text:
-                    question_text = self.generate_smart_opening_question(concept_record[1], concept_record[5] or "", concept_record[3] or "")
-                    try:
-                        sanitized_question = question_text.replace("'", "\\'").replace('"', '\\"')
-                        self.graph_service.graph.query(
-                            f"MATCH (fc:FeynmanConcept {{id: '{concept_record[0]}'}}) "
-                            f"SET fc.learning_question = '{sanitized_question}', fc.child_question = '{sanitized_question}'"
-                        )
-                    except Exception as update_exc:
-                        print(f"Update node error: {update_exc}")
-                return {
-                    "id": concept_record[0],
-                    "name": concept_record[1],
-                    "citation": concept_record[2],
-                    "core_truth": concept_record[3],
+                if query_result.result_set:
+                    concept_record = query_result.result_set[0]
+                    question_text = concept_record[6] if len(concept_record) > 6 and concept_record[6] else concept_record[4]
+                    if not question_text or "lại vận hành như vậy" in question_text or "Cơ chế cốt lõi và nguyên nhân" in question_text:
+                        question_text = self.generate_smart_opening_question(concept_record[1], concept_record[5] or "", concept_record[3] or "")
+                        try:
+                            sanitized_question = question_text.replace("'", "\\'").replace('"', '\\"')
+                            self.graph_service.graph.query(
+                                f"MATCH (fc:FeynmanConcept {{id: '{concept_record[0]}'}}) "
+                                f"SET fc.learning_question = '{sanitized_question}', fc.child_question = '{sanitized_question}'"
+                            )
+                        except Exception as update_exc:
+                            print(f"Update node error: {update_exc}")
+                    res = {
+                        "id": concept_record[0],
+                        "name": concept_record[1],
+                        "citation": concept_record[2],
+                        "core_truth": concept_record[3],
+                        "child_question": question_text,
+                        "learning_question": question_text,
+                        "quote": concept_record[5],
+                        "track": concept_record[7] if len(concept_record) > 7 else active_track
+                    }
+                    self._concept_cache[active_track] = res
+                    return res
+            except Exception as query_exc:
+                print(f"ℹ️ Query concept error from FalkorDB: {query_exc}")
+
+            # Fallback to slide concept from FalkorDB
+            target = self.graph_service.get_next_probing_target()
+            if target:
+                question_text = target.get("probe_question", "")
+                if not question_text or "lại vận hành như vậy" in question_text:
+                    question_text = self.generate_smart_opening_question(target["concept_name"], target.get("summary", ""), target.get("truth_hint", ""))
+                res = {
+                    "id": target["concept_id"],
+                    "name": target["concept_name"],
+                    "citation": f"[Slide P.{target['page']}]",
+                    "core_truth": target["truth_hint"],
                     "child_question": question_text,
                     "learning_question": question_text,
-                    "quote": concept_record[5],
-                    "track": concept_record[7] if len(concept_record) > 7 else active_track
+                    "quote": target["summary"]
                 }
-        except Exception as query_exc:
-            print(f"ℹ️ Query concept error from FalkorDB: {query_exc}")
-
-        # Fallback to slide concept from FalkorDB
-        target = self.graph_service.get_next_probing_target()
-        if target:
-            question_text = target.get("probe_question", "")
-            if not question_text or "lại vận hành như vậy" in question_text:
-                question_text = self.generate_smart_opening_question(target["concept_name"], target.get("summary", ""), target.get("truth_hint", ""))
-            return {
-                "id": target["concept_id"],
-                "name": target["concept_name"],
-                "citation": f"[Slide P.{target['page']}]",
-                "core_truth": target["truth_hint"],
-                "child_question": question_text,
-                "learning_question": question_text,
-                "quote": target["summary"]
-            }
+                self._concept_cache[active_track] = res
+                return res
 
         # Fallback đọc trực tiếp từ RealDataLoader (quét transcript markdown thực tế)
         try:
             real_concepts = self.data_loader.parse_vlearn_transcripts()
             if real_concepts:
                 first = real_concepts[0]
-                return {
+                res = {
                     "id": first["id"],
                     "name": first["name"],
                     "citation": first["citation"],
@@ -205,11 +181,13 @@ class SocraticAgentEngine:
                     "learning_question": first["learning_question"],
                     "quote": first["quote_text"]
                 }
+                self._concept_cache[active_track] = res
+                return res
         except Exception as e:
             print(f"Fallback loader error: {e}")
 
         # Fallback an toàn nếu chưa nạp đồ thị: không tiết lộ bất kỳ nội dung thực tế nào của bài giảng
-        return {
+        res = {
             "id": "concept_pending",
             "name": "Nội dung học tập",
             "citation": "[Tài liệu tham khảo]",
@@ -218,6 +196,8 @@ class SocraticAgentEngine:
             "learning_question": "Bạn có thể giải thích theo cách hiểu của bạn về chủ đề này được không?",
             "quote": ""
         }
+        self._concept_cache[active_track] = res
+        return res
 
     def generate_topic_intro_directions(self, concept_node: Dict[str, Any]) -> List[str]:
         """
@@ -300,7 +280,7 @@ class SocraticAgentEngine:
         self.concept_turns[concept_id] = turn_count
 
         # 0. Query pedagogical blindspots from FalkorDB (Misconceptions, Trade-offs, Mechanisms, Counter-examples)
-        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id)
+        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id) if self.graph_service else {}
 
         # 1. Evaluate teaching explanation across 8 pedagogical criteria
         evaluation_result = self.guardrails.evaluate_teaching_explanation(
@@ -498,7 +478,7 @@ class SocraticAgentEngine:
         turn_count = self.concept_turns.get(concept_id, 0) + 1
         self.concept_turns[concept_id] = turn_count
 
-        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id)
+        pedagogical_context = self.graph_service.get_concept_pedagogical_context(concept_id) if self.graph_service else {}
 
         evaluation_result = self.guardrails.evaluate_teaching_explanation(
             student_msg=student_msg,
@@ -650,6 +630,8 @@ class SocraticAgentEngine:
                 except Exception:
                     pass
                 self.graph_service.mark_concept_covered(concept_id)
+                if self.graph_service and self.graph_service.current_track:
+                    self._concept_cache.pop(self.graph_service.current_track, None)
                 is_end_of_graph, _, _ = self.graph_service.is_end_of_graph()
 
                 if not is_end_of_graph:
@@ -746,6 +728,7 @@ class SocraticAgentEngine:
         """
         self.graph_service.set_active_track(track_id)
         self.concept_turns.clear()
+        self._concept_cache.pop(track_id, None)
 
         current_concept = self.get_current_feynman_concept()
         directions = self.generate_topic_intro_directions(current_concept)

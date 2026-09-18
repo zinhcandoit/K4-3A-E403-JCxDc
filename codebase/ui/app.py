@@ -14,8 +14,34 @@ if codebase_dir not in sys.path:
 
 load_dotenv(os.path.join(codebase_dir, ".env"))
 
+import re
 from backend.agent_engine import SocraticAgentEngine
-from config.config import settings, clean_lesson_title
+from config.config import settings
+
+
+def clean_lesson_title(raw_title: str) -> str:
+    """Loại bỏ sạch các tiền tố, hậu tố rác như (sáng), (chiều), dấu gạch ngang, v.v."""
+    if not raw_title:
+        return ""
+    title = raw_title.strip()
+    title = re.sub(r"^[#📘📑\s]+(?:Slide:\s*)?", "", title, flags=re.IGNORECASE)
+    title = re.sub(
+        r"^Transcript\s+bài\s+giảng\s*(?:\([^)]*\))?\s*[-—–:]?\s*(?:(?:Day|Buổi|Bài)\s*\d+\s*[-—–:.]?)?\s*",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    )
+    title = re.sub(r"^(?:Day|Buổi|Bài)\s*\d+\s*[-—–:.]\s*", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"^\s*\((?:sáng|chiều|tối)\)\s*[-—–:]?\s*", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\s*\((?:sáng|chiều|tối)\)\s*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\s*\([^)]*(?:phần|part)\s*[^)]*\)\s*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\s*\(phần\s+(?:sau|đầu)\s+buổi\)\s*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"^[-—–:\s]+", "", title)
+    title = re.sub(r"\s*[-—–:]\s*$", "", title)
+    return title.strip()
+
+
+from backend.voice_model import transcribe_audio
 try:
     from ui.visualize_graph import generate_graph_html
 except ImportError:
@@ -170,8 +196,8 @@ st.markdown("""
         box-shadow: 0 0 25px rgba(16, 163, 127, 0.25);
     }
 
-    /* Gemini UI Thinking Pattern */
-    .gemini-thinking-container {
+    /* Collapsible Pedagogical Thinking Box */
+    .thinking-box-container {
         background: rgba(255, 255, 255, 0.025);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
@@ -179,11 +205,11 @@ st.markdown("""
         overflow: hidden;
         transition: all 0.25s ease;
     }
-    .gemini-thinking-container:hover {
+    .thinking-box-container:hover {
         border-color: rgba(255, 255, 255, 0.16);
         background: rgba(255, 255, 255, 0.035);
     }
-    .gemini-thinking-summary {
+    .thinking-box-summary {
         cursor: pointer;
         padding: 9px 14px;
         font-size: 13px;
@@ -195,66 +221,273 @@ st.markdown("""
         user-select: none;
         outline: none;
     }
-    .gemini-thinking-summary:hover {
+    .thinking-box-summary:hover {
         color: #e5e7eb;
     }
-    .gemini-thinking-body {
+    .thinking-box-body {
         padding: 12px 16px 14px 16px;
         border-top: 1px solid rgba(255, 255, 255, 0.06);
         background: rgba(0, 0, 0, 0.25);
     }
-    .gemini-phase-card {
+    .thinking-phase-card {
         margin-bottom: 12px;
         padding-left: 12px;
         border-left: 2px solid #10a37f88;
     }
-    .gemini-phase-card:last-child {
+    .thinking-phase-card:last-child {
         margin-bottom: 0;
     }
-    .gemini-phase-header {
+    .thinking-phase-header {
         display: flex;
         align-items: center;
         gap: 8px;
         margin-bottom: 4px;
     }
-    .gemini-phase-title {
+    .thinking-phase-title {
         font-size: 12px;
         font-weight: 600;
         color: #6ee7b7;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .gemini-phase-badge {
+    .thinking-phase-badge {
         font-size: 10px;
         padding: 1px 6px;
         border-radius: 6px;
         background: rgba(255, 255, 255, 0.08);
         color: #94a3b8;
     }
-    .gemini-phase-content {
+    .thinking-phase-content {
         font-size: 12.5px;
         line-height: 1.6;
         color: #94a3b8;
         opacity: 0.72;
     }
-    .gemini-final-text {
+    .final-reply-text {
         font-size: 15px !important;
         line-height: 1.65 !important;
         color: #f8fafc !important;
         opacity: 1.0 !important;
         font-weight: 400 !important;
     }
+
+    /* Bottom pinned bar styling */
+    div[data-testid="stBottom"] {
+        background: #212121 !important;
+        border-top: none !important;
+    }
+    div[data-testid="stBottom"] > div {
+        background: transparent !important;
+        padding-top: 6px !important;
+        padding-bottom: 14px !important;
+    }
+    .main .block-container,
+    section[data-testid="stMain"] .block-container {
+        padding-bottom: 140px !important;
+    }
+
+    /* Bottom Bar Centered Outer Layout */
+    .st-key-chatgpt_bottom_outer {
+        max-width: 860px !important;
+        margin: 0 auto !important;
+    }
+
+    /* Prompt Input Container */
+    .st-key-chatgpt_prompt_outer,
+    .chatgpt-prompt-outer {
+        background: #2f2f2f !important;
+        border: 1px solid #3d3d3d !important;
+        border-radius: 26px !important;
+        padding: 4px 14px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .st-key-chatgpt_prompt_outer:focus-within,
+    .chatgpt-prompt-outer:focus-within {
+        border-color: #565856 !important;
+        box-shadow: 0 4px 26px rgba(0, 0, 0, 0.6) !important;
+    }
+    .st-key-chatgpt_prompt_outer div[data-testid="stForm"],
+    .chatgpt-prompt-outer div[data-testid="stForm"] {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    /* Auto-expand vertical textarea */
+    .st-key-chatgpt_prompt_outer textarea,
+    .chatgpt-prompt-outer textarea {
+        background: transparent !important;
+        border: none !important;
+        color: #ececec !important;
+        font-size: 15px !important;
+        line-height: 1.5 !important;
+        resize: none !important;
+        field-sizing: content !important;
+        min-height: 26px !important;
+        max-height: 180px !important;
+        overflow-y: auto !important;
+        padding: 6px 0 !important;
+        box-shadow: none !important;
+    }
+    .st-key-chatgpt_prompt_outer textarea:focus,
+    .chatgpt-prompt-outer textarea:focus {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .st-key-chatgpt_prompt_outer div[data-testid="stTextArea"],
+    .st-key-chatgpt_prompt_outer div[data-testid="stTextArea"] > div,
+    .chatgpt-prompt-outer div[data-testid="stTextArea"],
+    .chatgpt-prompt-outer div[data-testid="stTextArea"] > div {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Send button styling */
+    .chatgpt-send-btn button,
+    .chatgpt-send-btn button[data-testid="baseButton-secondary"] {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border-radius: 50% !important;
+        border: none !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 0 !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
+        transition: transform 0.1s ease, background 0.15s ease !important;
+    }
+    .chatgpt-send-btn button:hover {
+        background: #1d4ed8 !important;
+        transform: scale(1.05);
+    }
+    .chatgpt-send-btn button p {
+        color: #ffffff !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+    }
+    .chatgpt-send-btn button:disabled {
+        background: #3a3a3a !important;
+        color: #737373 !important;
+        box-shadow: none !important;
+        cursor: not-allowed !important;
+    }
+    .chatgpt-send-btn button:disabled p {
+        color: #737373 !important;
+    }
+
+    /* Voice Recorder Container (Tách riêng biệt cạnh khung prompt) */
+    .st-key-voice_recorder_outer {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+    }
+    div[data-testid="stAudioInput"] {
+        background: #2f2f2f !important;
+        border: 1px solid #3d3d3d !important;
+        border-radius: 26px !important;
+        padding: 4px 10px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+        width: 100% !important;
+        min-height: 46px !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    div[data-testid="stAudioInput"]:hover,
+    div[data-testid="stAudioInput"]:focus-within {
+        border-color: #565856 !important;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+    }
+    div[data-testid="stAudioInput"] button,
+    div[data-testid="stAudioInput"] button[data-testid="baseButton-secondary"] {
+        border-radius: 50% !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+    }
+    div[data-testid="stAudioInput"] * {
+        color: #ececec !important;
+    }
+    /* Hiển thị 00:00/30:00 trên bộ đếm thời gian */
+    .voice-timer-with-max {
+        display: inline-flex !important;
+        align-items: center !important;
+        overflow: visible !important;
+    }
+    .voice-timer-with-max::after {
+        content: "/30:00" !important;
+        color: #888888 !important;
+        font-size: 0.9em !important;
+        font-weight: 500 !important;
+        margin-left: 1px !important;
+    }
+
+    /* Shimmer Pulse Typing Card (Alex thinking animation) */
+    .alex-thinking-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(16, 163, 127, 0.3);
+        border-radius: 12px;
+        padding: 10px 16px;
+        margin: 8px 0;
+        width: fit-content;
+        animation: breathing-glow 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes breathing-glow {
+        0% { border-color: rgba(16, 163, 127, 0.2); box-shadow: 0 0 8px rgba(16, 163, 127, 0.05); }
+        100% { border-color: rgba(16, 163, 127, 0.6); box-shadow: 0 0 16px rgba(16, 163, 127, 0.2); }
+    }
+    .alex-thinking-text {
+        font-size: 13.5px;
+        color: #b4b4b4;
+        font-weight: 500;
+    }
+    .typing-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .typing-dot {
+        width: 5px;
+        height: 5px;
+        background-color: #10a37f;
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    .typing-dot:nth-child(3) { animation-delay: 0s; }
+    @keyframes typingBounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+        40% { transform: scale(1.1); opacity: 1; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
-# Khởi tạo Engine
-engine = SocraticAgentEngine()
+# Khởi tạo Engine (Cached để không bao giờ khởi tạo lại khi rerun)
+@st.cache_resource
+def get_engine():
+    return SocraticAgentEngine()
+
+engine = get_engine()
 st.session_state.engine = engine
 
 
-def render_gemini_thinking_box(thinking_phases: list) -> str:
-    """Render collapsible Gemini-style thinking container grouped by pedagogical phases."""
+def render_thinking_box(thinking_phases: list) -> str:
+    """Render collapsible thinking container grouped by pedagogical phases."""
     if not thinking_phases:
         return ""
 
@@ -262,7 +495,7 @@ def render_gemini_thinking_box(thinking_phases: list) -> str:
     for phase_item in thinking_phases:
         title = phase_item.get("phase_name", "Giai đoạn suy nghĩ")
         badge = phase_item.get("badge", "")
-        badge_html = f"<span class='gemini-phase-badge'>{badge}</span>" if badge else ""
+        badge_html = f"<span class='thinking-phase-badge'>{badge}</span>" if badge else ""
 
         if "details" in phase_item:
             lines = [f"<div>• {line}</div>" if not line.startswith("•") else f"<div>{line}</div>" for line in phase_item["details"]]
@@ -275,23 +508,23 @@ def render_gemini_thinking_box(thinking_phases: list) -> str:
             content_html = f"<div>{phase_item.get('content', '')}</div>"
 
         phases_html.append(f"""
-        <div class="gemini-phase-card">
-            <div class="gemini-phase-header">
-                <span class="gemini-phase-title">{title}</span>
+        <div class="thinking-phase-card">
+            <div class="thinking-phase-header">
+                <span class="thinking-phase-title">{title}</span>
                 {badge_html}
             </div>
-            <div class="gemini-phase-content">{content_html}</div>
+            <div class="thinking-phase-content">{content_html}</div>
         </div>
         """)
 
     all_phases = "".join(phases_html)
     return f"""
-    <details class="gemini-thinking-container">
-        <summary class="gemini-thinking-summary">
+    <details class="thinking-box-container">
+        <summary class="thinking-box-summary">
             <span>💭</span>
             <span>Xem quá trình suy nghĩ & thẩm định ({len(thinking_phases)} giai đoạn)</span>
         </summary>
-        <div class="gemini-thinking-body">
+        <div class="thinking-box-body">
             {all_phases}
         </div>
     </details>
@@ -386,35 +619,99 @@ def call_api_graph(track: str = None):
     return engine.graph_service.export_graph_for_ui(track=track)
 
 
-# Track and lesson state initialization
-available_lessons = call_api_lessons()
+# Track and lesson state initialization (Cached in session_state)
+if "available_lessons" not in st.session_state:
+    st.session_state.available_lessons = call_api_lessons()
+available_lessons = st.session_state.available_lessons
 lesson_map = {lesson["track"]: lesson for lesson in available_lessons}
 
 if "selected_track" not in st.session_state:
     st.session_state.selected_track = settings.get_default_track()
 
-engine.graph_service.set_active_track(st.session_state.selected_track)
-current_feynman_concept = engine.get_current_feynman_concept()
+if "current_feynman_concept" not in st.session_state or st.session_state.get("_last_cached_track") != st.session_state.selected_track:
+    if engine.graph_service:
+        engine.graph_service.set_active_track(st.session_state.selected_track)
+    st.session_state.current_feynman_concept = engine.get_current_feynman_concept()
+    st.session_state._last_cached_track = st.session_state.selected_track
+
+current_feynman_concept = st.session_state.current_feynman_concept
 current_lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
+
+
+def generate_llm_topic_intro(concept_node: dict, clean_topic: str) -> str:
+    """
+    Dùng LLM để sinh lời chào mở đầu và gợi ý 3 hướng đi sâu sắc, cụ thể theo chủ đề bài học,
+    tuyệt đối không dùng các mẫu rập khuôn hoặc fallback string mặc định.
+    """
+    core_truth = concept_node.get("core_truth", "")
+    concept_name = clean_lesson_title(concept_node.get("name", clean_topic))
+
+    prompt = (
+        f"Bạn là Alex — một người bạn học cùng lớp (Socratic Protégé) thân thiện, khiêm tốn, ham học hỏi.\n"
+        f"Bạn và bạn học đang bắt đầu cùng nhau ôn tập chuyên đề: '{clean_topic}'.\n"
+        f"Nội dung trọng tâm bài giảng: '{core_truth if core_truth else concept_name}'.\n\n"
+        f"Nhiệm vụ của bạn:\n"
+        f"Viết lời mở đầu tự nhiên, gần gũi và gợi mở:\n"
+        f"1. Chào bạn học vui vẻ và giới thiệu chủ đề ôn tập dạng in đậm: **{clean_topic}** 🎓\n"
+        f"2. Gợi ý đúng 3 hướng đi cụ thể, hấp dẫn để bạn học có thể chọn bắt đầu giảng lại cho bạn nghe.\n"
+        f"   - Hướng 1: Về bài toán thực tế hoặc thách thức mà khái niệm này giải quyết.\n"
+        f"   - Hướng 2: Về cơ chế hoạt động cốt lõi hoặc các bước tiến hành.\n"
+        f"   - Hướng 3: Về sự đánh đổi, rủi ro hoặc một ví dụ thực tế điển hình.\n"
+        f"   LƯU Ý QUAN TRỌNG: Hãy đặt câu hỏi hoặc gợi mở tình huống cụ thể gắn liền với '{clean_topic}'. TUYỆT ĐỐI KHÔNG dùng các tiêu đề nhạt nhẽo như 'Bản chất & Vai trò', 'Cơ chế hoạt động', 'Ứng dụng & Đánh đổi'.\n"
+        f"3. Khích lệ bạn học chọn một hướng hoặc bắt đầu giảng theo cách hiểu riêng.\n"
+        f"4. Văn phong: Bạn bè cùng lớp, xưng hô 'mình - bạn', ngắn gọn, ấm áp (dưới 120 từ)."
+    )
+
+    try:
+        res = engine.nvidia_client.generate_text(
+            prompt=prompt,
+            enable_thinking=False
+        )
+        if res and len(res.strip()) > 30:
+            return res.strip()
+        return f"⚠️ [Lỗi LLM]: Mô hình trả về kết quả rỗng khi khởi tạo chủ đề '{clean_topic}'."
+    except Exception as exc:
+        return f"⚠️ [Lỗi kết nối LLM]: Không thể sinh lời mở đầu cho chủ đề '{clean_topic}'. Chi tiết: {exc}"
+
+
+def generate_llm_parroting_stream(student_msg: str, concept_name: str, citation: str, core_truth: str = ""):
+    """
+    Sinh phản hồi Socratic bằng LLM khi học viên nói máy móc hoặc chép nguyên văn tài liệu.
+    Tuyệt đối không dùng fallback string mặc định nếu có lỗi.
+    """
+    prompt = (
+        f"Bạn là Alex — một người bạn học cùng lớp (Socratic Protégé) đang học chung với bạn học.\n"
+        f"Chủ đề đang ôn: '{concept_name}'.\n"
+        f"Tài liệu tham chiếu: {citation}.\n"
+        f"Câu học viên vừa trả lời:\n\"{student_msg}\"\n\n"
+        f"Đánh giá: Câu trả lời này bị chép nguyên văn từ tài liệu hoặc trả lời rất máy móc, học vẹt.\n\n"
+        f"Nhiệm vụ của Alex:\n"
+        f"1. Phản ứng tự nhiên, hóm hỉnh như bạn bè (TUYỆT ĐỐI KHÔNG dùng câu rập khuôn 'Đoạn này nghe giống như trích dẫn từ tài liệu...').\n"
+        f"2. Khéo léo nhận xét rằng câu vừa rồi nghe chuẩn sách vở quá, nhưng Alex muốn hiểu bản chất thật sự.\n"
+        f"3. Đặt một câu hỏi gợi mở, khích lệ bạn học dùng ngôn từ đời thường hoặc một ví dụ thực tế giản dị để giải thích lại điểm mấu chốt.\n"
+        f"4. Giọng điệu: Bạn học cùng lớp, xưng hô 'mình - bạn', ngắn gọn (2-3 câu, dưới 60 từ)."
+    )
+
+    try:
+        has_any = False
+        for chunk in engine.nvidia_client.generate_stream(prompt=prompt):
+            if chunk:
+                has_any = True
+                yield chunk
+        if not has_any:
+            yield f"⚠️ [Lỗi LLM]: Mô hình không phản hồi khi sinh câu hỏi gợi mở cho '{concept_name}'."
+    except Exception as exc:
+        yield f"⚠️ [Lỗi kết nối LLM]: Không thể sinh phản hồi từ mô hình AI ({exc})."
 
 
 def build_initial_topic_message(concept_node: dict, lesson_title: str = "") -> dict:
     """
-    Tạo thông điệp mở đầu phiên học: Alex không bắt đầu ngay với một câu hỏi,
-    mà chào hỏi, giới thiệu chủ đề cần ôn tập và gợi ý các hướng để học viên bắt đầu giảng.
+    Tạo thông điệp mở đầu phiên học bằng LLM: Alex chào hỏi, giới thiệu chủ đề
+    và gợi ý các hướng đi cụ thể theo chủ đề để học viên bắt đầu giảng.
     """
     topic_raw = lesson_title if lesson_title else concept_node.get("name", "Kiến thức trọng tâm")
     clean_topic = clean_lesson_title(topic_raw)
-    directions = engine.generate_topic_intro_directions(concept_node)
-
-    directions_md = "\n".join([f"- {direction}" for direction in directions])
-
-    content = (
-        f"Chào bạn, mình là Alex. Chúng ta cùng bắt đầu ôn tập: **{clean_topic}** 🎓\n\n"
-        f"Một số hướng bạn có thể bắt đầu:\n"
-        f"{directions_md}\n\n"
-        f"Bạn có thể chọn một hướng ở trên hoặc bắt đầu giải thích theo cách hiểu của bạn nhé!"
-    )
+    content = generate_llm_topic_intro(concept_node, clean_topic)
 
     # Đặt gợi ý ban đầu vào memory
     engine.memory.set_last_question("vlearn_default", f"Khởi đầu ôn tập: {clean_topic}")
@@ -441,7 +738,9 @@ def get_live_socratic_opening(concept_node: dict) -> str:
 if "messages" in st.session_state and st.session_state.messages:
     first_content = st.session_state.messages[0].get("content", "")
     if (
-        "lại vận hành như vậy" in first_content
+        "Bản chất & Vai trò" in first_content
+        or "(sáng)" in first_content
+        or "lại vận hành như vậy" in first_content
         or "Cơ chế cốt lõi và nguyên nhân" in first_content
         or "thách thức kỹ thuật lớn nhất khi giải quyết vấn đề" in first_content
         or "Đọc qua bài giảng, mình có một thắc mắc về mặt kỹ thuật muốn hỏi bạn" in first_content
@@ -449,6 +748,9 @@ if "messages" in st.session_state and st.session_state.messages:
         or "Draft 2:" in first_content
         or "Under 35 words" in first_content
         or "> *\"" in first_content
+        or "Chào bạn, mình là Alex nè! Chúng ta cùng bắt đầu ôn tập:" in first_content
+        or "Một vài hướng bạn có thể chọn để bắt đầu chia sẻ:" in first_content
+        or "ttemperature" in first_content
     ):
         del st.session_state["messages"]
 
@@ -468,6 +770,18 @@ if "session_finished" not in st.session_state:
 
 if "active_view" not in st.session_state:
     st.session_state.active_view = "chat"
+
+if "prompt_version" not in st.session_state:
+    st.session_state.prompt_version = 0
+
+if "voice_version" not in st.session_state:
+    st.session_state.voice_version = 0
+
+if "draft_prompt" not in st.session_state:
+    st.session_state.draft_prompt = ""
+
+if "is_recording" not in st.session_state:
+    st.session_state.is_recording = False
 
 
 # ==========================================
@@ -499,8 +813,14 @@ with st.sidebar:
 
     if selected_track_id != st.session_state.selected_track:
         st.session_state.selected_track = selected_track_id
+        if engine.graph_service:
+            engine.graph_service.set_active_track(selected_track_id)
         switch_info = call_api_switch_lesson(selected_track_id, session_id="vlearn_default")
-        new_concept = switch_info.get("concept", engine.get_current_feynman_concept())
+        new_concept = switch_info.get("concept", engine.get_current_feynman_concept(force_refresh=True))
+        st.session_state.current_feynman_concept = new_concept
+        st.session_state._last_cached_track = selected_track_id
+        st.session_state.cached_progress = call_api_progress(selected_track_id)
+        st.session_state._progress_track = selected_track_id
         lesson_title = lesson_map.get(selected_track_id, {}).get("title", selected_track_id)
         st.session_state.messages = [build_initial_topic_message(new_concept, lesson_title)]
         st.session_state.is_ended = False
@@ -513,7 +833,8 @@ with st.sidebar:
     col_sidebar_new, col_sidebar_finish = st.columns(2)
     with col_sidebar_new:
         if st.button("➕ Mới (Reset)", use_container_width=True):
-            engine.graph_service.reset_track_progress(st.session_state.selected_track)
+            if engine.graph_service:
+                engine.graph_service.reset_track_progress(st.session_state.selected_track)
             engine.clear_session_history("vlearn_default")
             engine.concept_turns.clear()
             try:
@@ -522,7 +843,11 @@ with st.sidebar:
             except Exception:
                 pass
 
-            current_feynman_concept = engine.get_current_feynman_concept()
+            current_feynman_concept = engine.get_current_feynman_concept(force_refresh=True)
+            st.session_state.current_feynman_concept = current_feynman_concept
+            st.session_state._last_cached_track = st.session_state.selected_track
+            st.session_state.cached_progress = call_api_progress(st.session_state.selected_track)
+            st.session_state._progress_track = st.session_state.selected_track
             lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
             st.session_state.messages = [build_initial_topic_message(current_feynman_concept, lesson_title)]
             st.session_state.is_ended = False
@@ -536,8 +861,11 @@ with st.sidebar:
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-    # 2. FalkorDB Learning Progress Metrics
-    progress_info = call_api_progress(st.session_state.selected_track)
+    # 2. FalkorDB Learning Progress Metrics (Cached)
+    if "cached_progress" not in st.session_state or st.session_state.get("_progress_track") != st.session_state.selected_track:
+        st.session_state.cached_progress = call_api_progress(st.session_state.selected_track)
+        st.session_state._progress_track = st.session_state.selected_track
+    progress_info = st.session_state.cached_progress
     percent = progress_info.get("percent", 0.0)
     covered = progress_info.get("covered", 0)
     total = progress_info.get("total", 0)
@@ -581,7 +909,7 @@ with st.sidebar:
     st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
     st.markdown("""
     <div style="background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:10px; margin-bottom:10px; font-size:11px; color:#aaa;">
-        <strong style="color:#10a37f;">Phương pháp Feynman:</strong> Bạn hiểu sâu kiến thức bằng cách tự mình giải thích và truyền đạt lại theo logic mạch lạc, có căn cứ rõ ràng.
+        <strong style="color:#10a37f;">Phương pháp học:</strong> Bạn hiểu sâu kiến thức bằng cách tự mình giải thích và truyền đạt lại theo logic mạch lạc, có căn cứ rõ ràng.
     </div>
     <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#aaa;">
         <div style="width:28px; height:28px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold;">V</div>
@@ -605,7 +933,7 @@ st.markdown(f"""
 <div style="display:flex; justify-content:center; align-items:center; margin-top:-20px;">
     <div class="model-pill">
         <span class="model-dot"></span>
-        <span>Alex · Socratic Protégé (ChatNVIDIA)</span>
+        <span>Alex · Trợ lý Học tập</span>
         <span style="color:#777; font-size:11px;">| {current_lesson_title} · {current_feynman_concept.get('name', 'Bài học')}</span>
     </div>
 </div>
@@ -633,7 +961,7 @@ if st.session_state.active_view == "chat":
             </p>
             <div style="display:flex; gap:16px; font-size:13px; color:#aaa; flex-wrap:wrap;">
                 <div>🎯 <strong>Nội dung hoàn thành:</strong> {covered}/{total} ({percent}%)</div>
-                <div>⚡ <strong>Phương pháp:</strong> Học chủ động qua giải thích (Feynman)</div>
+                <div>⚡ <strong>Phương pháp:</strong> Học chủ động qua giải thích</div>
                 <div>🛡️ <strong>Tiêu chí:</strong> Lập luận logic & Có căn cứ rõ ràng</div>
             </div>
         </div>
@@ -692,12 +1020,8 @@ if st.session_state.active_view == "chat":
             role = msg["role"]
             avatar = "👤" if role == "user" else "🎓"
             with st.chat_message(role, avatar=avatar):
-                # Khối Thinking kiểu Gemini UI: đóng mở được, opacity mờ hơn, chia theo phase
-                if role == "assistant" and msg.get("thinking_phases"):
-                    st.markdown(render_gemini_thinking_box(msg["thinking_phases"]), unsafe_allow_html=True)
-
-                # Nội dung kết quả cuối cùng rõ ràng, nổi bật nhất (100% opacity)
-                st.markdown(f"<div class='gemini-final-text'>{msg['content']}</div>", unsafe_allow_html=True)
+                # Nội dung kết quả rõ ràng, nổi bật nhất
+                st.markdown(f"<div class='final-reply-text'>{msg['content']}</div>", unsafe_allow_html=True)
 
                 if role == "assistant" and msg.get("event_label"):
                     tag_color = "tag-green" if "nhân quả" in msg.get("event_label", "") or "Đạt" in msg.get("event_label", "") else ("tag-red" if "nguyên văn" in msg.get("event_label", "") else "tag-orange")
@@ -753,15 +1077,163 @@ if st.session_state.active_view == "chat":
             else:
                 st.info("Bạn đã hoàn thành tất cả các bài học hiện có!")
 
-    # Nhập liệu Chat Input kiểu ChatGPT
+    # Nhập liệu Chat Input (Ghim cố định ở đáy màn hình với Voice Recorder tách riêng)
     if not st.session_state.is_ended:
-        col_toolbar_empty, col_toolbar_finish = st.columns([7, 3])
-        with col_toolbar_finish:
-            if st.button("🏁 Kết thúc phiên & Xem tổng kết", use_container_width=True):
-                st.session_state.session_finished = True
-                st.rerun()
+        student_input = None
 
-        student_input = st.chat_input("Giải thích rõ ràng bằng lập luận của bạn...")
+        with st.bottom:
+            with st.container(key="chatgpt_bottom_outer"):
+                col_prompt_box, col_voice_box = st.columns([7.2, 2.8], vertical_alignment="center")
+
+                current_prompt_key = f"user_prompt_{st.session_state.get('prompt_version', 0)}"
+                if current_prompt_key not in st.session_state:
+                    st.session_state[current_prompt_key] = ""
+
+                with col_prompt_box:
+                    with st.container(key="chatgpt_prompt_outer"):
+                        col_text, col_send = st.columns([8.8, 1.2], vertical_alignment="center")
+                        with col_text:
+                            user_typed_prompt = st.text_area(
+                                "Prompt",
+                                value=st.session_state.get(current_prompt_key, ""),
+                                placeholder="Nhắn tin cho Alex...",
+                                label_visibility="collapsed",
+                                key=current_prompt_key,
+                                height=36
+                            )
+                        with col_send:
+                            has_text = bool(user_typed_prompt.strip())
+                            st.markdown('<div class="chatgpt-send-btn">', unsafe_allow_html=True)
+                            send_submitted = st.button("↑", key="btn_send_prompt", help="Gửi tin nhắn (Enter)", disabled=not has_text)
+                            st.markdown('</div>', unsafe_allow_html=True)
+
+                with col_voice_box:
+                    with st.container(key="voice_recorder_outer"):
+                        recorded_voice = st.audio_input(
+                            "Voice",
+                            key=f"voice_recorder_{st.session_state.get('voice_version', 0)}",
+                            label_visibility="collapsed"
+                        )
+
+                # Xử lý âm thanh thu âm từ Microphone
+                if recorded_voice is not None:
+                    audio_bytes = recorded_voice.getvalue()
+                    if audio_bytes and audio_bytes != st.session_state.get("_last_processed_voice"):
+                        st.session_state._last_processed_voice = audio_bytes
+                        with st.spinner("🎙️ Đang nhận diện giọng nói..."):
+                            transcribed_text = transcribe_audio(audio_bytes)
+                        if transcribed_text and transcribed_text.strip():
+                            st.session_state.prompt_version = st.session_state.get("prompt_version", 0) + 1
+                            new_prompt_key = f"user_prompt_{st.session_state.prompt_version}"
+                            st.session_state[new_prompt_key] = transcribed_text.strip()
+                            st.session_state.voice_version = st.session_state.get("voice_version", 0) + 1
+                            st.toast(f"✅ Đã nhận diện: {transcribed_text.strip()}", icon="✍️")
+                            st.rerun()
+                        else:
+                            st.toast("⚠️ Không nhận diện được âm thanh. Hãy thử nói lại rõ ràng hơn.", icon="⚠️")
+
+                if send_submitted and has_text:
+                    student_input = user_typed_prompt.strip()
+                    st.session_state.prompt_version = st.session_state.get("prompt_version", 0) + 1
+                    st.session_state[f"user_prompt_{st.session_state.prompt_version}"] = ""
+
+            st.markdown("<p style='text-align:center; font-size:11px; color:#666; margin:4px 0 0 0;'>VLearn — Nền tảng học tập tương tác chủ động.</p>", unsafe_allow_html=True)
+
+        # Hỗ trợ Enter gửi tin nhắn, hiển thị 00:00/30:00 và tự ngắt sau 30s chuyển cho model
+        components.html(r"""
+        <script>
+        (function() {
+            const doc = window.parent.document;
+
+            // 1. Enter để gửi prompt
+            const bindEnter = () => {
+                const textarea = doc.querySelector('.st-key-chatgpt_prompt_outer textarea, .chatgpt-prompt-outer textarea');
+                if (textarea && !textarea.dataset.enterBound) {
+                    textarea.dataset.enterBound = "true";
+                    textarea.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            const sendBtn = doc.querySelector('.chatgpt-send-btn button');
+                            if (sendBtn && !sendBtn.disabled) {
+                                sendBtn.click();
+                            }
+                        }
+                    });
+                }
+            };
+
+            // 2. Hiển thị 00:00/30:00 và tự động ngắt sau 30s để model xử lý
+            let recordingTimer = null;
+
+            const formatTimerAndWatch = () => {
+                const audioInput = doc.querySelector('div[data-testid="stAudioInput"]');
+                if (!audioInput) return;
+                // Tìm element hiển thị thời gian trong stAudioInput (có định dạng 00:xx)
+                const candidates = audioInput.querySelectorAll('span, div, time');
+                let timerElem = null;
+                for (const el of candidates) {
+                    const txt = (el.innerText || el.textContent || '').trim();
+                    if (txt.includes(':') && /^\d{2}:\d{2}/.test(txt) && !el.querySelector('button') && el.children.length <= 1) {
+                        timerElem = el;
+                        break;
+                    }
+                }
+
+                if (timerElem && !timerElem.classList.contains('voice-timer-with-max')) {
+                    timerElem.classList.add('voice-timer-with-max');
+                }
+
+                // Gắn bộ đếm 30s vào nút micro
+                const btn = audioInput.querySelector('button');
+                if (btn && !btn.dataset.voiceBound) {
+                    btn.dataset.voiceBound = "true";
+                    btn.addEventListener('click', function() {
+                        if (recordingTimer) {
+                            // Người dùng bấm dừng thủ công trước 30s
+                            clearTimeout(recordingTimer);
+                            recordingTimer = null;
+                            return;
+                        }
+
+                        // Đặt hẹn giờ tối đa 30s (30000ms): tự động ngắt để model xử lý
+                        recordingTimer = setTimeout(() => {
+                            recordingTimer = null;
+                            const stopBtn = audioInput.querySelector('button');
+                            if (stopBtn) {
+                                stopBtn.click();
+                            }
+                        }, 30000);
+                    });
+                }
+
+                // Theo dõi text thời gian: nếu chạm mốc 00:30 thì ngắt ngay
+                if (timerElem) {
+                    const currentTxt = (timerElem.innerText || timerElem.textContent || '').trim();
+                    if (currentTxt.startsWith('00:30') || currentTxt.startsWith('00:31')) {
+                        if (recordingTimer) {
+                            clearTimeout(recordingTimer);
+                            recordingTimer = null;
+                        }
+                        const stopBtn = audioInput.querySelector('button');
+                        if (stopBtn) {
+                            stopBtn.click();
+                        }
+                    }
+                }
+            };
+
+            const runBinders = () => {
+                bindEnter();
+                formatTimerAndWatch();
+            };
+
+            runBinders();
+            const intervalLoop = setInterval(runBinders, 400);
+            window.addEventListener('beforeunload', () => clearInterval(intervalLoop));
+        })();
+        </script>
+        """, height=0)
+
         if student_input:
             user_msg = {
                 "role": "user",
@@ -774,34 +1246,65 @@ if st.session_state.active_view == "chat":
 
             with st.chat_message("assistant", avatar="🎓"):
                 status_placeholder = st.empty()
-                thinking_placeholder = st.empty()
                 response_placeholder = st.empty()
                 tag_placeholder = st.empty()
 
-                status_placeholder.status("⚡ Alex đang phân tích lập luận và đối chiếu tri thức...", expanded=False)
+                # Hiệu ứng Shimmer Typing Card sống động (không đơ cứng, không lộ reasoning)
+                status_placeholder.markdown("""
+                <div class="alex-thinking-card">
+                    <div class="typing-dots">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+                    <span class="alex-thinking-text">Alex đang suy ngẫm câu trả lời...</span>
+                </div>
+                """, unsafe_allow_html=True)
 
                 meta = {
-                    "thinking_phases": [],
                     "event_label": "Hỏi vặn về cơ chế",
                     "is_end": False
                 }
 
                 def stream_tokens():
+                    first_token = True
+                    is_parroting_case = False
+                    eval_data = {}
+
                     for event in engine.process_student_message_stream(student_input, session_id="vlearn_default"):
                         if event["type"] == "thinking":
-                            meta["thinking_phases"] = event.get("thinking_phases", [])
                             meta["event_label"] = event.get("event_label", "")
-                            if meta["thinking_phases"]:
-                                thinking_placeholder.markdown(render_gemini_thinking_box(meta["thinking_phases"]), unsafe_allow_html=True)
-                            status_placeholder.empty()
+                            eval_data = event.get("evaluation", {})
+                            meta["citation"] = event.get("citation", "[VLearn]")
+                            meta["concept_name"] = event.get("concept_name", "")
+                            if eval_data.get("is_cheating") or "nguyên văn" in meta["event_label"]:
+                                is_parroting_case = True
                         elif event["type"] == "token":
+                            if is_parroting_case:
+                                # Bỏ qua token mẫu mặc định của engine, chuẩn bị stream từ LLM
+                                continue
+                            if first_token:
+                                status_placeholder.empty()
+                                first_token = False
                             yield event["chunk"]
                         elif event["type"] == "done":
                             meta["is_end"] = event.get("is_end_of_graph", False)
-                            final_phases = event.get("thinking_phases", [])
-                            if final_phases:
-                                meta["thinking_phases"] = final_phases
-                                thinking_placeholder.markdown(render_gemini_thinking_box(final_phases), unsafe_allow_html=True)
+
+                    # Khi học viên nói máy móc / chép bài: Sinh câu hỏi Socratic bằng LLM!
+                    if is_parroting_case:
+                        status_placeholder.empty()
+                        current_concept = st.session_state.get("current_feynman_concept", {})
+                        core_truth = current_concept.get("core_truth", "")
+                        concept_name = clean_lesson_title(meta.get("concept_name") or current_concept.get("name", ""))
+                        citation = meta.get("citation", "[VLearn]")
+
+                        llm_reply_chunks = []
+                        for tok in generate_llm_parroting_stream(student_input, concept_name, citation, core_truth):
+                            llm_reply_chunks.append(tok)
+                            yield tok
+
+                        full_reply = "".join(llm_reply_chunks)
+                        engine.memory.set_last_question("vlearn_default", full_reply)
 
                 streamed_reply = response_placeholder.write_stream(stream_tokens())
                 status_placeholder.empty()
@@ -816,7 +1319,6 @@ if st.session_state.active_view == "chat":
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": streamed_reply,
-                "thinking_phases": meta["thinking_phases"],
                 "event_label": meta["event_label"],
                 "time": datetime.now().strftime("%H:%M")
             })
@@ -824,12 +1326,14 @@ if st.session_state.active_view == "chat":
                 st.session_state.is_ended = True
 
             current_progress = call_api_progress(st.session_state.selected_track)
+            st.session_state.cached_progress = current_progress
+            st.session_state.current_feynman_concept = engine.get_current_feynman_concept(force_refresh=True)
             if current_progress.get("is_end", False) and current_progress.get("total", 0) > 0:
                 st.session_state.is_ended = True
 
             st.rerun()
 
-    st.markdown("<p style='text-align:center; font-size:11.5px; color:#666; margin-top:10px;'>VLearn — Nền tảng học tập tương tác chủ động cùng AI.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-size:11.5px; color:#666; margin-top:10px;'>VLearn — Nền tảng học tập tương tác chủ động.</p>", unsafe_allow_html=True)
 
 
 # =========================================================================

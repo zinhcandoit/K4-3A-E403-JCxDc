@@ -174,19 +174,13 @@ CHỈ TRẢ VỀ DUY NHẤT ĐOẠN JSON TRÊN."""
 
         evaluation_instance: Optional[PedagogicalEvaluation] = None
 
-        # Execute ChatNVIDIA prompt evaluation and parse JSON response
+        # Execute standard LangChain with_structured_output (enable_thinking=False)
         try:
-            raw_text = self.client.generate_text(
-                prompt=judge_prompt,
-                system_prompt="Bạn là Giám định viên Sư phạm AI nghiêm ngặt. Chỉ xuất JSON."
-            )
-            if raw_text:
-                json_match = re.search(r"\{[\s\S]*\}", raw_text)
-                if json_match:
-                    raw_dict = json.loads(json_match.group(0))
-                    evaluation_instance = PedagogicalEvaluation(**raw_dict)
+            structured_judge = self.client.with_structured_output(PedagogicalEvaluation)
+            self.client.rate_limiter.acquire()
+            evaluation_instance = structured_judge.invoke(judge_prompt)
         except Exception as exc:
-            print(f"⚠️ Pedagogical evaluation parsing error: {exc}")
+            print(f"⚠️ Pedagogical evaluation error: {exc}")
 
         if evaluation_instance:
             is_mastered = evaluation_instance.is_mastered
