@@ -31,6 +31,7 @@ class NVIDIARateLimiter:
             if len(self.timestamps) >= self.max_rpm:
                 sleep_time = 60.0 - (now - self.timestamps[0]) + 0.1
                 if sleep_time > 0:
+                    print(f"   ⏳ [Rate Limiter] Đạt {self.max_rpm} RPM, đang nghỉ {sleep_time:.1f}s để tránh 429...", flush=True)
                     time.sleep(sleep_time)
                 now = time.time()
                 self.timestamps = [t for t in self.timestamps if now - t < 60.0]
@@ -226,6 +227,7 @@ class NvidiaAIClient:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
+        timeout_val = getattr(settings, "LLM_TIMEOUT", 60.0) or 60.0
         try:
             resp = self.openai_client.chat.completions.create(
                 model=self.model_name,
@@ -234,6 +236,7 @@ class NvidiaAIClient:
                 top_p=settings.NVIDIA_TOP_P,
                 max_tokens=self.max_tokens,
                 extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+                timeout=timeout_val,
             )
             return resp.choices[0].message.content or ""
         except Exception as e:

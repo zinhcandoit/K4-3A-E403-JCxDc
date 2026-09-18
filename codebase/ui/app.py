@@ -382,56 +382,6 @@ st.markdown("""
         color: #737373 !important;
     }
 
-    /* Voice Recorder Container (Tách riêng biệt cạnh khung prompt) */
-    .st-key-voice_recorder_outer {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        position: relative !important;
-    }
-    div[data-testid="stAudioInput"] {
-        background: #2f2f2f !important;
-        border: 1px solid #3d3d3d !important;
-        border-radius: 26px !important;
-        padding: 4px 10px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
-        width: 100% !important;
-        min-height: 46px !important;
-        display: flex !important;
-        align-items: center !important;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
-    }
-    div[data-testid="stAudioInput"]:hover,
-    div[data-testid="stAudioInput"]:focus-within {
-        border-color: #565856 !important;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
-    }
-    div[data-testid="stAudioInput"] button,
-    div[data-testid="stAudioInput"] button[data-testid="baseButton-secondary"] {
-        border-radius: 50% !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-        width: 36px !important;
-        height: 36px !important;
-        padding: 0 !important;
-    }
-    div[data-testid="stAudioInput"] * {
-        color: #ececec !important;
-    }
-    /* Hiển thị 00:00/30:00 trên bộ đếm thời gian */
-    .voice-timer-with-max {
-        display: inline-flex !important;
-        align-items: center !important;
-        overflow: visible !important;
-    }
-    .voice-timer-with-max::after {
-        content: "/30:00" !important;
-        color: #888888 !important;
-        font-size: 0.9em !important;
-        font-weight: 500 !important;
-        margin-left: 1px !important;
-    }
-
     /* Shimmer Pulse Typing Card (Alex thinking animation) */
     .alex-thinking-card {
         display: flex;
@@ -726,6 +676,22 @@ def build_initial_topic_message(concept_node: dict, lesson_title: str = "") -> d
     }
 
 
+def end_and_clear_session():
+    """
+    Tự động dọn dẹp sạch bộ nhớ hội thoại và xóa file db/chat_history.json trên ổ đĩa
+    mỗi khi kết thúc phiên học (hoặc chuyển/đặt lại bài học).
+    """
+    if "final_summary" not in st.session_state or not st.session_state.final_summary:
+        st.session_state.final_summary = engine.get_global_summary("vlearn_default")
+    engine.clear_session_history("vlearn_default")
+    engine.memory.clear_all()
+    try:
+        if settings.CHAT_HISTORY_FILE.exists():
+            settings.CHAT_HISTORY_FILE.unlink()
+    except Exception as exc:
+        print(f"⚠️ Lỗi khi xóa file chat_history.json: {exc}")
+
+
 def get_live_socratic_opening(concept_node: dict) -> str:
     """Generate or retrieve opening Socratic probe from lecture content without formulaic phrases."""
     raw_question = concept_node.get('learning_question') or concept_node.get('child_question') or ''
@@ -813,6 +779,8 @@ with st.sidebar:
 
     if selected_track_id != st.session_state.selected_track:
         st.session_state.selected_track = selected_track_id
+        end_and_clear_session()
+        st.session_state.final_summary = ""
         if engine.graph_service:
             engine.graph_service.set_active_track(selected_track_id)
         switch_info = call_api_switch_lesson(selected_track_id, session_id="vlearn_default")
@@ -835,7 +803,8 @@ with st.sidebar:
         if st.button("➕ Mới (Reset)", use_container_width=True):
             if engine.graph_service:
                 engine.graph_service.reset_track_progress(st.session_state.selected_track)
-            engine.clear_session_history("vlearn_default")
+            end_and_clear_session()
+            st.session_state.final_summary = ""
             engine.concept_turns.clear()
             try:
                 with httpx.Client(timeout=2.0) as client:
@@ -856,6 +825,7 @@ with st.sidebar:
 
     with col_sidebar_finish:
         if st.button("🏁 Kết thúc", use_container_width=True):
+            end_and_clear_session()
             st.session_state.session_finished = True
             st.rerun()
 
@@ -943,7 +913,7 @@ st.markdown(f"""
 if st.session_state.active_view == "chat":
     # Nếu kết thúc session (Chủ động từ người dùng hoặc sau khi hoàn thành đồ thị)
     if st.session_state.session_finished:
-        global_summary = engine.get_global_summary("vlearn_default")
+        global_summary = st.session_state.get("final_summary") or engine.get_global_summary("vlearn_default")
         progress_info = call_api_progress(st.session_state.selected_track)
         percent = progress_info.get("percent", 0.0)
         covered = progress_info.get("covered", 0)
@@ -991,7 +961,8 @@ if st.session_state.active_view == "chat":
         with col_finish_new:
             if st.button("🔄 Bắt đầu phiên học mới", use_container_width=True, type="primary"):
                 engine.graph_service.reset_track_progress(st.session_state.selected_track)
-                engine.clear_session_history("vlearn_default")
+                end_and_clear_session()
+                st.session_state.final_summary = ""
                 engine.concept_turns.clear()
                 try:
                     with httpx.Client(timeout=2.0) as client:
@@ -1058,6 +1029,7 @@ if st.session_state.active_view == "chat":
         col_option_finish, col_option_next = st.columns(2)
         with col_option_finish:
             if st.button("🏁 Hoàn thành buổi học & Xem tổng kết", use_container_width=True, type="primary"):
+                end_and_clear_session()
                 st.session_state.session_finished = True
                 st.rerun()
 
@@ -1069,9 +1041,11 @@ if st.session_state.active_view == "chat":
                     clean_other_title = clean_lesson_title(other_lesson["title"])
                     if st.button(f"👉 {clean_other_title}", key=f"end_opt_{other_lesson['track']}", use_container_width=True):
                         st.session_state.selected_track = other_lesson["track"]
+                        end_and_clear_session()
+                        st.session_state.final_summary = ""
                         switch_info = call_api_switch_lesson(other_lesson["track"], session_id="vlearn_default")
                         new_concept = switch_info.get("concept", engine.get_current_feynman_concept())
-                        st.session_state.messages.append(build_initial_topic_message(new_concept, other_lesson["title"]))
+                        st.session_state.messages = [build_initial_topic_message(new_concept, other_lesson["title"])]
                         st.session_state.is_ended = False
                         st.rerun()
             else:
@@ -1095,7 +1069,6 @@ if st.session_state.active_view == "chat":
                         with col_text:
                             user_typed_prompt = st.text_area(
                                 "Prompt",
-                                value=st.session_state.get(current_prompt_key, ""),
                                 placeholder="Nhắn tin cho Alex...",
                                 label_visibility="collapsed",
                                 key=current_prompt_key,
@@ -1104,135 +1077,41 @@ if st.session_state.active_view == "chat":
                         with col_send:
                             has_text = bool(user_typed_prompt.strip())
                             st.markdown('<div class="chatgpt-send-btn">', unsafe_allow_html=True)
-                            send_submitted = st.button("↑", key="btn_send_prompt", help="Gửi tin nhắn (Enter)", disabled=not has_text)
+                            send_submitted = st.button("↑", key="btn_send_prompt", help="Gửi tin nhắn", disabled=not has_text)
                             st.markdown('</div>', unsafe_allow_html=True)
 
+                voice_key = f"voice_input_{st.session_state.get('voice_key_idx', 0)}"
                 with col_voice_box:
-                    with st.container(key="voice_recorder_outer"):
-                        recorded_voice = st.audio_input(
-                            "Voice",
-                            key=f"voice_recorder_{st.session_state.get('voice_version', 0)}",
-                            label_visibility="collapsed"
-                        )
+                    recorded_voice = st.audio_input(
+                        "Voice",
+                        key=voice_key,
+                        label_visibility="collapsed"
+                    )
 
                 # Xử lý âm thanh thu âm từ Microphone
                 if recorded_voice is not None:
                     audio_bytes = recorded_voice.getvalue()
-                    if audio_bytes and audio_bytes != st.session_state.get("_last_processed_voice"):
-                        st.session_state._last_processed_voice = audio_bytes
+                    if audio_bytes:
+                        st.session_state.voice_key_idx = st.session_state.get("voice_key_idx", 0) + 1
                         with st.spinner("🎙️ Đang nhận diện giọng nói..."):
                             transcribed_text = transcribe_audio(audio_bytes)
                         if transcribed_text and transcribed_text.strip():
                             st.session_state.prompt_version = st.session_state.get("prompt_version", 0) + 1
                             new_prompt_key = f"user_prompt_{st.session_state.prompt_version}"
                             st.session_state[new_prompt_key] = transcribed_text.strip()
-                            st.session_state.voice_version = st.session_state.get("voice_version", 0) + 1
                             st.toast(f"✅ Đã nhận diện: {transcribed_text.strip()}", icon="✍️")
                             st.rerun()
                         else:
                             st.toast("⚠️ Không nhận diện được âm thanh. Hãy thử nói lại rõ ràng hơn.", icon="⚠️")
+                            st.rerun()
 
                 if send_submitted and has_text:
                     student_input = user_typed_prompt.strip()
                     st.session_state.prompt_version = st.session_state.get("prompt_version", 0) + 1
                     st.session_state[f"user_prompt_{st.session_state.prompt_version}"] = ""
+                    st.session_state.voice_key_idx = st.session_state.get("voice_key_idx", 0) + 1
 
             st.markdown("<p style='text-align:center; font-size:11px; color:#666; margin:4px 0 0 0;'>VLearn — Nền tảng học tập tương tác chủ động.</p>", unsafe_allow_html=True)
-
-        # Hỗ trợ Enter gửi tin nhắn, hiển thị 00:00/30:00 và tự ngắt sau 30s chuyển cho model
-        components.html(r"""
-        <script>
-        (function() {
-            const doc = window.parent.document;
-
-            // 1. Enter để gửi prompt
-            const bindEnter = () => {
-                const textarea = doc.querySelector('.st-key-chatgpt_prompt_outer textarea, .chatgpt-prompt-outer textarea');
-                if (textarea && !textarea.dataset.enterBound) {
-                    textarea.dataset.enterBound = "true";
-                    textarea.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            const sendBtn = doc.querySelector('.chatgpt-send-btn button');
-                            if (sendBtn && !sendBtn.disabled) {
-                                sendBtn.click();
-                            }
-                        }
-                    });
-                }
-            };
-
-            // 2. Hiển thị 00:00/30:00 và tự động ngắt sau 30s để model xử lý
-            let recordingTimer = null;
-
-            const formatTimerAndWatch = () => {
-                const audioInput = doc.querySelector('div[data-testid="stAudioInput"]');
-                if (!audioInput) return;
-                // Tìm element hiển thị thời gian trong stAudioInput (có định dạng 00:xx)
-                const candidates = audioInput.querySelectorAll('span, div, time');
-                let timerElem = null;
-                for (const el of candidates) {
-                    const txt = (el.innerText || el.textContent || '').trim();
-                    if (txt.includes(':') && /^\d{2}:\d{2}/.test(txt) && !el.querySelector('button') && el.children.length <= 1) {
-                        timerElem = el;
-                        break;
-                    }
-                }
-
-                if (timerElem && !timerElem.classList.contains('voice-timer-with-max')) {
-                    timerElem.classList.add('voice-timer-with-max');
-                }
-
-                // Gắn bộ đếm 30s vào nút micro
-                const btn = audioInput.querySelector('button');
-                if (btn && !btn.dataset.voiceBound) {
-                    btn.dataset.voiceBound = "true";
-                    btn.addEventListener('click', function() {
-                        if (recordingTimer) {
-                            // Người dùng bấm dừng thủ công trước 30s
-                            clearTimeout(recordingTimer);
-                            recordingTimer = null;
-                            return;
-                        }
-
-                        // Đặt hẹn giờ tối đa 30s (30000ms): tự động ngắt để model xử lý
-                        recordingTimer = setTimeout(() => {
-                            recordingTimer = null;
-                            const stopBtn = audioInput.querySelector('button');
-                            if (stopBtn) {
-                                stopBtn.click();
-                            }
-                        }, 30000);
-                    });
-                }
-
-                // Theo dõi text thời gian: nếu chạm mốc 00:30 thì ngắt ngay
-                if (timerElem) {
-                    const currentTxt = (timerElem.innerText || timerElem.textContent || '').trim();
-                    if (currentTxt.startsWith('00:30') || currentTxt.startsWith('00:31')) {
-                        if (recordingTimer) {
-                            clearTimeout(recordingTimer);
-                            recordingTimer = null;
-                        }
-                        const stopBtn = audioInput.querySelector('button');
-                        if (stopBtn) {
-                            stopBtn.click();
-                        }
-                    }
-                }
-            };
-
-            const runBinders = () => {
-                bindEnter();
-                formatTimerAndWatch();
-            };
-
-            runBinders();
-            const intervalLoop = setInterval(runBinders, 400);
-            window.addEventListener('beforeunload', () => clearInterval(intervalLoop));
-        })();
-        </script>
-        """, height=0)
 
         if student_input:
             user_msg = {
@@ -1355,4 +1234,7 @@ elif st.session_state.active_view == "graph":
 
     # Nhúng trực tiếp bản đồ mạng đồ thị Vis.js Network
     graph_html = generate_graph_html(graph_data, height="720px")
-    components.html(graph_html, height=740, scrolling=False)
+    if hasattr(st, "iframe"):
+        st.iframe(graph_html, height=740)
+    else:
+        components.html(graph_html, height=740, scrolling=False)

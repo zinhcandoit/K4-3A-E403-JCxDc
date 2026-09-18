@@ -185,21 +185,32 @@ class SimpleConversationMemory:
         return "\n\n".join(sections)
 
     def clear_history(self, session_id: str):
-        """Xóa lịch sử của một session"""
+        """Xóa lịch sử của một session và tự động dọn dẹp file disk nếu trống."""
         if session_id in self.sessions:
-            self.sessions[session_id] = []
+            del self.sessions[session_id]
         if session_id in self.global_summaries:
             del self.global_summaries[session_id]
         if session_id in self.last_asked:
             del self.last_asked[session_id]
+        if not self.sessions and not self.global_summaries:
+            if self.storage_file.exists():
+                try:
+                    self.storage_file.unlink()
+                    return
+                except Exception:
+                    pass
         self.save_to_disk()
 
     def clear_all(self):
-        """Xóa toàn bộ lịch sử"""
+        """Xóa toàn bộ lịch sử và tự động xóa file chat_history.json trên ổ đĩa."""
         self.sessions.clear()
         self.global_summaries.clear()
         self.last_asked.clear()
-        self.save_to_disk()
+        if self.storage_file.exists():
+            try:
+                self.storage_file.unlink()
+            except Exception as e:
+                print(f"⚠️ Lỗi xóa chat_history.json: {e}")
 
     def save_to_disk(self):
         """Lưu dữ liệu xuống file JSON"""

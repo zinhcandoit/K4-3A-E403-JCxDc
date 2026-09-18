@@ -49,7 +49,7 @@ class SlideGraphBuilder:
         sanitized = sanitized.replace("\n", " ").replace("\r", " ")
         return sanitized.strip()
 
-    def build_and_ingest(self, target_file: Optional[str] = None, include_slides: bool = False) -> None:
+    def build_and_ingest(self, target_file: Optional[str] = None, include_slides: bool = False, force_refresh: bool = False) -> None:
         """
         Nạp đồ thị tri thức sư phạm cục bộ theo từng file độc lập:
         - Mặc định: Nạp tài liệu bài giảng mục tiêu.
@@ -58,24 +58,37 @@ class SlideGraphBuilder:
         """
         self.reset_database()
         target_document = target_file or settings.get_default_document()
-        print("=" * 70)
-        print("BẮT ĐẦU KHỞI TẠO ĐỒ THỊ SƯ PHẠM ĐA QUAN HỆ (KNOWLEDGE LOCALITY)")
-        print(f"Tài liệu mục tiêu: '{target_document}'")
-        print("Nguyên tắc: Liên kết nội bộ theo từng bài học độc lập")
-        print("=" * 70)
+        print("=" * 70, flush=True)
+        print("BẮT ĐẦU KHỞI TẠO ĐỒ THỊ SƯ PHẠM ĐA QUAN HỆ (KNOWLEDGE LOCALITY)", flush=True)
+        print(f"Tài liệu mục tiêu: '{target_document}'", flush=True)
+        print("Nguyên tắc: Liên kết nội bộ theo từng bài học độc lập", flush=True)
+        print("=" * 70, flush=True)
 
         # 1. Trích xuất danh sách khái niệm từ tài liệu bài giảng
+        print(f"\n📂 [Bước 1/4] Đang phân tích tài liệu bài giảng: '{target_document}'...", flush=True)
         feynman_concepts = self.loader.parse_vlearn_transcripts(target_filename=target_document)
         if not feynman_concepts:
-            print(f"Cảnh báo: Không tìm thấy khái niệm nào từ tài liệu: {target_document}")
+            print(f"❌ Cảnh báo: Không tìm thấy khái niệm nào từ tài liệu: {target_document}", flush=True)
             return
+        print(f"   ✅ Đã trích xuất {len(feynman_concepts)} khái niệm mục tiêu từ bài giảng.", flush=True)
 
         # 2. Trích xuất động các khía cạnh sư phạm (Điểm mù nhận thức của học viên)
-        print("Đang trích xuất động các điểm mù sư phạm qua ChatNVIDIA...")
-        pedagogical_aspects = self.loader.extract_pedagogical_aspects(feynman_concepts)
+        print(f"\n🤖 [Bước 2/4] Đang trích xuất động các điểm mù sư phạm qua ChatNVIDIA ({len(feynman_concepts)} khái niệm)...", flush=True)
+        pedagogical_aspects = self.loader.extract_pedagogical_aspects(
+            feynman_concepts,
+            cache_key=target_document,
+            force_refresh=force_refresh
+        )
+        print(f"   ✅ Hoàn tất trích xuất điểm mù sư phạm ({len(pedagogical_aspects)}/{len(feynman_concepts)} khái niệm sẵn sàng).", flush=True)
 
         # 3. Tạo các Node Khái niệm và các Node Vệ tinh Sư phạm trên FalkorDB
-        for concept in feynman_concepts:
+        print(f"\n🗄️ [Bước 3/4] Đang nạp các Node và Cạnh Sư phạm vào FalkorDB...", flush=True)
+        total_concepts = len(feynman_concepts)
+        for idx, concept in enumerate(feynman_concepts, 1):
+            if idx == 1 or idx % 5 == 0 or idx == total_concepts:
+                pct = int(idx / total_concepts * 100)
+                print(f"   ⚙️ Nạp Node vào FalkorDB: {idx}/{total_concepts} ({pct}%) [{concept['name'][:28]}]...", flush=True)
+
             concept_id = concept["id"]
             safe_name = self._sanitize_cypher_string(concept["name"])
             safe_quote = self._sanitize_cypher_string(concept["quote_text"])
@@ -212,6 +225,7 @@ class SlideGraphBuilder:
                 """)
 
         # 4. Nối các cạnh liên kết tiến trình Socratic nội bộ theo từng file
+        print(f"\n🔗 [Bước 4/4] Đang kết nối các cạnh quan hệ Socratic nội bộ...", flush=True)
         concepts_by_document: Dict[str, List[Dict[str, Any]]] = {}
         for concept in feynman_concepts:
             document_id = concept["doc_id"]
@@ -255,16 +269,17 @@ class SlideGraphBuilder:
                     alternative_edge_count += 1
 
         print(
-            f"Đã tạo {prerequisite_edge_count} PREREQUISITE_FOR, "
+            f"   ✅ Đã tạo {prerequisite_edge_count} PREREQUISITE_FOR, "
             f"{deep_dive_edge_count} DEEP_DIVE_INTO, "
-            f"{alternative_edge_count} ALTERNATIVE_PATH nội bộ trong bài học."
+            f"{alternative_edge_count} ALTERNATIVE_PATH nội bộ trong bài học.",
+            flush=True
         )
 
         # 5. Xử lý nạp slide PDF thành track độc lập riêng biệt (nếu được yêu cầu)
         if include_slides:
             slide_concepts = self.loader.parse_lecture_slides_pdf()
             if slide_concepts:
-                print(f"Đang nạp {len(slide_concepts)} slide thành Track độc lập riêng...")
+                print(f"\n📑 [Bổ sung] Đang nạp {len(slide_concepts)} slide thành Track độc lập riêng...", flush=True)
                 for slide in slide_concepts:
                     safe_title = self._sanitize_cypher_string(slide["title"])
                     safe_summary = self._sanitize_cypher_string(slide["summary"])
@@ -297,9 +312,9 @@ class SlideGraphBuilder:
                     CREATE (a)-[:PREREQUISITE_FOR]->(b)
                     """)
                     slide_edge_count += 1
-                print(f"Đã tạo {slide_edge_count} liên kết PREREQUISITE_FOR nội bộ trong file slide PDF.")
+                print(f"   ✅ Đã tạo {slide_edge_count} liên kết PREREQUISITE_FOR nội bộ trong file slide PDF.", flush=True)
 
-        print("Khởi tạo đồ thị sư phạm đa quan hệ hoàn tất 100%!")
+        print("\n🎉 KHỞI TẠO ĐỒ THỊ SƯ PHẠM ĐA QUAN HỆ HOÀN TẤT 100%!", flush=True)
         self.verify_summary()
 
     def verify_summary(self) -> None:
@@ -318,23 +333,23 @@ class SlideGraphBuilder:
         counter_example_count = cex_res.result_set[0][0] if cex_res.result_set else 0
         total_nodes = concept_count + misconception_count + tradeoff_count + mechanism_count + counter_example_count
 
-        print("\n" + "=" * 80)
-        print(f"BẢNG TỔNG KẾT ĐỒ THỊ SƯ PHẠM ĐA QUAN HỆ TRÊN FALKORDB: '{self.graph_name}'")
-        print(f"Tổng số Nodes: {total_nodes}")
-        print(f"   - (:Concept:FeynmanConcept): {concept_count} nodes")
-        print(f"   - (:Misconception) [Bẫy ngộ nhận]: {misconception_count} nodes")
-        print(f"   - (:Tradeoff) [Đánh đổi kỹ thuật]: {tradeoff_count} nodes")
-        print(f"   - (:Mechanism) [Cơ chế nhân quả]: {mechanism_count} nodes")
-        print(f"   - (:CounterExample) [Phản ví dụ / Biên]: {counter_example_count} nodes")
-        print("-" * 80)
-        print("Các loại Quan hệ Sư phạm (Socratic Relationships):")
+        print("\n" + "=" * 80, flush=True)
+        print(f"BẢNG TỔNG KẾT ĐỒ THỊ SƯ PHẠM ĐA QUAN HỆ TRÊN FALKORDB: '{self.graph_name}'", flush=True)
+        print(f"Tổng số Nodes: {total_nodes}", flush=True)
+        print(f"   - (:Concept:FeynmanConcept): {concept_count} nodes", flush=True)
+        print(f"   - (:Misconception) [Bẫy ngộ nhận]: {misconception_count} nodes", flush=True)
+        print(f"   - (:Tradeoff) [Đánh đổi kỹ thuật]: {tradeoff_count} nodes", flush=True)
+        print(f"   - (:Mechanism) [Cơ chế nhân quả]: {mechanism_count} nodes", flush=True)
+        print(f"   - (:CounterExample) [Phản ví dụ / Biên]: {counter_example_count} nodes", flush=True)
+        print("-" * 80, flush=True)
+        print("Các loại Quan hệ Sư phạm (Socratic Relationships):", flush=True)
         total_edges = 0
         for row in edge_res.result_set:
             relation_name, count = row[0], row[1]
-            print(f"   - [:{relation_name}]: {count} cạnh")
+            print(f"   - [:{relation_name}]: {count} cạnh", flush=True)
             total_edges += count
-        print(f"Tổng số Cạnh liên kết: {total_edges}")
-        print("=" * 80 + "\n")
+        print(f"Tổng số Cạnh liên kết: {total_edges}", flush=True)
+        print("=" * 80 + "\n", flush=True)
 
 
 def main():
@@ -342,11 +357,12 @@ def main():
     parser.add_argument("--file", type=str, default=None, help="Tên file cụ thể cần build graph")
     parser.add_argument("--all", action="store_true", help="Nạp tất cả file thành các track độc lập")
     parser.add_argument("--slides", action="store_true", help="Nạp thêm slide PDF thành track riêng biệt")
+    parser.add_argument("--force", action="store_true", help="Bắt buộc gọi lại LLM trích xuất mới thay vì dùng cache")
     args = parser.parse_args()
 
     builder = SlideGraphBuilder()
     target = "all" if args.all else args.file
-    builder.build_and_ingest(target_file=target, include_slides=args.slides)
+    builder.build_and_ingest(target_file=target, include_slides=args.slides, force_refresh=args.force)
 
 
 if __name__ == "__main__":

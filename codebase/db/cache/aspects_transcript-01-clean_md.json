@@ -1,0 +1,252 @@
+{
+  "transcript-01-clean_c1": {
+    "id": "transcript-01-clean_c1",
+    "pitfall": {
+      "name": "Ngộ nhận về Kỹ năng xác định bài toán từ yêu cầu mơ hồ",
+      "pitfall_text": "Học viên thường nghĩ Kỹ năng xác định bài toán từ yêu cầu mơ hồ hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Kỹ năng xác định bài toán từ yêu cầu mơ hồ'?",
+      "truth_hint": "Một trong những kỹ năng mình nghĩ quan trọng và đang cần nhất — đặc biệt ở các công ty muốn đưa AI vào ứng dụng — là khả năng xác định ra một bài toán từ một yêu cầu rất mơ hồ, hoặ"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Kỹ năng xác định bài toán từ yêu cầu mơ hồ",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Kỹ năng xác định bài toán từ yêu cầu mơ hồ', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Kỹ năng xác định bài toán từ yêu cầu mơ hồ",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Kỹ năng xác định bài toán từ yêu cầu mơ hồ -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Kỹ năng xác định bài toán từ yêu cầu mơ hồ'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Kỹ năng xác định bài toán từ yêu cầu mơ hồ",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Kỹ năng xác định bài toán từ yêu cầu mơ hồ.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c2": {
+    "id": "transcript-01-clean_c2",
+    "pitfall": {
+      "name": "Ngộ nhận về Phát triển sản phẩm AI có gì khác",
+      "pitfall_text": "Học viên thường nghĩ Phát triển sản phẩm AI có gì khác hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Phát triển sản phẩm AI có gì khác'?",
+      "truth_hint": "Đầu tiên, thế nào là việc phát triển một sản phẩm AI, xây dựng một sản phẩm AI? Đây là cái sơ đồ mình vẽ thử ra để mọi người nhìn được các cấu phần."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Phát triển sản phẩm AI có gì khác",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Phát triển sản phẩm AI có gì khác', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Phát triển sản phẩm AI có gì khác",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Phát triển sản phẩm AI có gì khác -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Phát triển sản phẩm AI có gì khác'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Phát triển sản phẩm AI có gì khác",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Phát triển sản phẩm AI có gì khác.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c3": {
+    "id": "transcript-01-clean_c3",
+    "pitfall": {
+      "name": "Ngộ nhận về Từ đề bài mơ hồ đến vấn đề thực sự",
+      "pitfall_text": "Học viên thường nghĩ Từ đề bài mơ hồ đến vấn đề thực sự hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Từ đề bài mơ hồ đến vấn đề thực sự'?",
+      "truth_hint": "Đây là một câu mà mình gặp được rất nhiều — nhiều công ty hay đặt ra câu hỏi này, nhiều sếp hay bảo là muốn xây dựng AI chatbot support. Khi nhận cái đề bài này thì các bạn sẽ phải"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Từ đề bài mơ hồ đến vấn đề thực sự",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Từ đề bài mơ hồ đến vấn đề thực sự', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Từ đề bài mơ hồ đến vấn đề thực sự",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Từ đề bài mơ hồ đến vấn đề thực sự -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Từ đề bài mơ hồ đến vấn đề thực sự'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Từ đề bài mơ hồ đến vấn đề thực sự",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Từ đề bài mơ hồ đến vấn đề thực sự.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c4": {
+    "id": "transcript-01-clean_c4",
+    "pitfall": {
+      "name": "Ngộ nhận về Bài tập: bài toán trợ giảng cho lớp 1000 học viên",
+      "pitfall_text": "Học viên thường nghĩ Bài tập: bài toán trợ giảng cho lớp 1000 học viên hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Bài tập: bài toán trợ giảng cho lớp 1000 học viên'?",
+      "truth_hint": "Rồi, bây giờ có một đề bài nhỏ cho mọi người — mọi người vào Discord nhá. Đề bài: bây giờ lớp mình khai giảng khoá mới và cả lớp có khoảng 1000 bạn đang học cùng một lúc, thế mà số"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Bài tập: bài toán trợ giảng cho lớp 1000 học viên",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Bài tập: bài toán trợ giảng cho lớp 1000 học viên', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Bài tập: bài toán trợ giảng cho lớp 1000 học viên",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Bài tập: bài toán trợ giảng cho lớp 1000 học viên -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Bài tập: bài toán trợ giảng cho lớp 1000 học viên'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Bài tập: bài toán trợ giảng cho lớp 1000 học viên",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Bài tập: bài toán trợ giảng cho lớp 1000 học viên.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c5": {
+    "id": "transcript-01-clean_c5",
+    "pitfall": {
+      "name": "Ngộ nhận về Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề",
+      "pitfall_text": "Học viên thường nghĩ Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề'?",
+      "truth_hint": "Tức là mỗi một ngày bạn sẽ có [không nghe rõ] của chính bạn, và thậm chí của những người xung quanh, để có thể test sản phẩm đấy. Đấy cũng là một cách mà các bạn có thể tìm được nh"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Tri thức ẩn của chuyên gia và việc tìm đúng vấn đề.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c6": {
+    "id": "transcript-01-clean_c6",
+    "pitfall": {
+      "name": "Ngộ nhận về Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?",
+      "pitfall_text": "Học viên thường nghĩ Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng? hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?'?",
+      "truth_hint": "Thế thì bây giờ có cách nào để mình tìm ra được vấn đề đúng hay không? Có một kỹ thuật mà mình xài khá nhiều, thấy rất có ích để xác định vấn đề trong làm sản phẩm: phase đầu tiên "
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng? -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Mô hình Double Diamond: làm đúng cái sai hay làm sai cái đúng?.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c7": {
+    "id": "transcript-01-clean_c7",
+    "pitfall": {
+      "name": "Ngộ nhận về First Principle Thinking",
+      "pitfall_text": "Học viên thường nghĩ First Principle Thinking hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'First Principle Thinking'?",
+      "truth_hint": "Thực ra có một bài rất hay về Elon Musk — vì bạn ấy vừa nhắc đến Musk thì mình gửi cho mọi người, mình rất thích bài đấy — nói về cách ông ấy dùng để giải quyết một vấn đề. Elon Mu"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong First Principle Thinking",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'First Principle Thinking', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối First Principle Thinking",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của First Principle Thinking -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'First Principle Thinking'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của First Principle Thinking",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành First Principle Thinking.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c8": {
+    "id": "transcript-01-clean_c8",
+    "pitfall": {
+      "name": "Ngộ nhận về Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề",
+      "pitfall_text": "Học viên thường nghĩ Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề'?",
+      "truth_hint": "Quay lại hình kim cương này. Các bước vẫn đơn giản: đi tìm đúng vấn đề, sau đấy tìm ra giải pháp cho đúng vấn đề đấy."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Phân kỳ – hội tụ và các kỹ thuật khám phá vấn đề.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c9": {
+    "id": "transcript-01-clean_c9",
+    "pitfall": {
+      "name": "Ngộ nhận về Ma trận tác động – nỗ lực (impact-effort matrix)",
+      "pitfall_text": "Học viên thường nghĩ Ma trận tác động – nỗ lực (impact-effort matrix) hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Ma trận tác động – nỗ lực (impact-effort matrix)'?",
+      "truth_hint": "Rồi, sau khi mình mở rộng không gian, tìm ra được nhiều rồi, mình đến pha hội tụ. Pha hội tụ có một số kỹ thuật: nhóm nó lại, đặt những câu hỏi Five Whys để đào sâu hơn — tìm cái l"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Ma trận tác động – nỗ lực (impact-effort matrix)",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Ma trận tác động – nỗ lực (impact-effort matrix)', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Ma trận tác động – nỗ lực (impact-effort matrix)",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Ma trận tác động – nỗ lực (impact-effort matrix) -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Ma trận tác động – nỗ lực (impact-effort matrix)'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Ma trận tác động – nỗ lực (impact-effort matrix)",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Ma trận tác động – nỗ lực (impact-effort matrix).",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-01-clean_c10": {
+    "id": "transcript-01-clean_c10",
+    "pitfall": {
+      "name": "Ngộ nhận về Vòng lặp HCD và bài tập cá nhân",
+      "pitfall_text": "Học viên thường nghĩ Vòng lặp HCD và bài tập cá nhân hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Vòng lặp HCD và bài tập cá nhân'?",
+      "truth_hint": "Đây là một quy trình để thiết kế sau khi chúng ta chọn ra được vấn đề rồi chẳng hạn. Thực ra ở đây mình quên mất cái slide đi tìm giải pháp — nó cũng có một số kỹ thuật để mở rộng "
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Vòng lặp HCD và bài tập cá nhân",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Vòng lặp HCD và bài tập cá nhân', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Vòng lặp HCD và bài tập cá nhân",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Vòng lặp HCD và bài tập cá nhân -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Vòng lặp HCD và bài tập cá nhân'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Vòng lặp HCD và bài tập cá nhân",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Vòng lặp HCD và bài tập cá nhân.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  }
+}

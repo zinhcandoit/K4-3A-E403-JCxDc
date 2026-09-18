@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import json
+import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import pymupdf  # PyMuPDF
@@ -63,9 +64,14 @@ class RealDataLoader:
 
         selected_headings: List[str] = []
         batch_size = 15
+        total_batches = (len(candidate_headings) + batch_size - 1) // batch_size
+        print(f"   🔎 Đang phân loại {len(candidate_headings)} tiêu đề chuyên môn ({total_batches} batches)...", flush=True)
 
         for index in range(0, len(candidate_headings), batch_size):
             batch = candidate_headings[index:index + batch_size]
+            batch_idx = index // batch_size + 1
+            print(f"      ⏳ [Phân loại {batch_idx}/{total_batches}] Đang kiểm duyệt {len(batch)} tiêu đề...", end="", flush=True)
+            t0 = time.time()
             prompt = f"""Bạn là Giám định viên Nội dung Sư phạm AI.
 Dưới đây là danh sách các tiêu đề mục được trích xuất từ file transcript bài giảng:
 {json.dumps(batch, ensure_ascii=False, indent=2)}
@@ -84,17 +90,23 @@ CHỈ TRẢ VỀ DUY NHẤT 1 MẢNG JSON CÁC TIÊU ĐỀ ĐƯỢC CHỌN (KHÔ
                     prompt=prompt,
                     system_prompt="Bạn là Giám định viên Nội dung Sư phạm AI. Chỉ xuất duy nhất một mảng JSON."
                 )
+                added_this_batch = 0
                 if response_text:
                     items = self._extract_json_array_from_text(response_text)
                     for item in items:
                         if isinstance(item, str) and item in batch:
                             selected_headings.append(item)
+                            added_this_batch += 1
                         elif isinstance(item, dict):
                             heading_title = item.get("heading", item.get("title", ""))
                             if heading_title and heading_title in batch and item.get("is_knowledge_concept", True):
                                 selected_headings.append(heading_title)
+                                added_this_batch += 1
+                t_elapsed = time.time() - t0
+                print(f" -> ✅ Xong trong {t_elapsed:.1f}s (chọn {added_this_batch}/{len(batch)})", flush=True)
             except Exception as exc:
-                print(f"ℹ️ Phân loại LLM batch {index // batch_size + 1}: {exc}")
+                t_elapsed = time.time() - t0
+                print(f" -> ⚠️ Lỗi ({t_elapsed:.1f}s: {exc})", flush=True)
 
         # Fallback heuristic if LLM returns empty list
         if not selected_headings:
@@ -196,7 +208,12 @@ CHỈ TRẢ VỀ DUY NHẤT 1 MẢNG JSON CÁC TIÊU ĐỀ ĐƯỢC CHỌN (KHÔ
         print(f"✅ Extracted {len(feynman_concepts)} concepts from {len(selected_files)} transcript file(s).")
         return feynman_concepts
 
-    def extract_pedagogical_aspects(self, concepts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def extract_pedagogical_aspects(
+        self,
+        concepts: List[Dict[str, Any]],
+        cache_key: Optional[str] = None,
+        force_refresh: bool = False
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Extract 4 pedagogical blindspots dynamically per concept:
         1. Misconception -> HAS_COMMON_PITFALL, CONTRADICTS
@@ -204,14 +221,43 @@ CHỈ TRẢ VỀ DUY NHẤT 1 MẢNG JSON CÁC TIÊU ĐỀ ĐƯỢC CHỌN (KHÔ
         3. Mechanism -> DEPENDS_ON_MECHANISM
         4. CounterExample -> HAS_COUNTER_EXAMPLE
         Enforces 36 RPM rate limiting with comprehensive fallback.
+        Tự động cache kết quả vào db/cache để tăng tốc các lần chạy sau.
         """
         if not concepts:
             return {}
 
+        # 0. Kiểm tra Cache trên ổ đĩa để tái sử dụng ngay lập tức nếu có
+        cache_file = None
+        if cache_key:
+            safe_key = re.sub(r"[^a-zA-Z0-9_-]", "_", cache_key)
+            cache_dir = settings.DB_DIR / "cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_file = cache_dir / f"aspects_{safe_key}.json"
+            if cache_file.exists() and not force_refresh:
+                try:
+                    with open(cache_file, "r", encoding="utf-8") as f:
+                        cached_data = json.load(f)
+                    if all(c["id"] in cached_data for c in concepts):
+                        print(f"   ⚡ [Cache Hit] Đã nạp sẵn {len(cached_data)} điểm mù sư phạm từ '{cache_file.name}' (0s)!", flush=True)
+                        return cached_data
+                except Exception as exc:
+                    print(f"   ℹ️ Đọc cache thất bại ({exc}), bắt đầu trích xuất mới...", flush=True)
+
         results: Dict[str, Dict[str, Any]] = {}
         batch_size = 5
-        for index in range(0, len(concepts), batch_size):
+        total_concepts = len(concepts)
+        total_batches = (total_concepts + batch_size - 1) // batch_size
+        print(f"   📊 Tổng cộng {total_concepts} khái niệm cần trích xuất ({total_batches} batches, mỗi batch {batch_size} concepts)...", flush=True)
+
+        for index in range(0, total_concepts, batch_size):
             batch = concepts[index:index + batch_size]
+            batch_num = index // batch_size + 1
+            batch_names = ", ".join([f"'{c['name'][:22]}...'" if len(c['name']) > 22 else f"'{c['name']}'" for c in batch[:2]])
+            if len(batch) > 2:
+                batch_names += f" (+{len(batch)-2} khác)"
+
+            print(f"      ⏳ [Batch {batch_num}/{total_batches}] Đang gọi ChatNVIDIA cho: {batch_names}...", end="", flush=True)
+            t_start = time.time()
             prompt_items = [
                 {
                     "id": concept_item["id"],
@@ -258,6 +304,7 @@ CHỈ XUẤT DUY NHẤT 1 MẢNG JSON HỢP LỆ VỚI CẤU TRÚC:
     }}
   }}
 ]"""
+            extracted_count = 0
             try:
                 raw_response = self.nvidia_client.generate_text(
                     prompt=prompt,
@@ -268,8 +315,15 @@ CHỈ XUẤT DUY NHẤT 1 MẢNG JSON HỢP LỆ VỚI CẤU TRÚC:
                     for item in aspects_list:
                         if isinstance(item, dict) and "id" in item:
                             results[item["id"]] = item
+                            extracted_count += 1
+                t_elapsed = time.time() - t_start
+                if extracted_count > 0:
+                    print(f" -> ✅ Xong trong {t_elapsed:.1f}s ({extracted_count}/{len(batch)} items)", flush=True)
+                else:
+                    print(f" -> ⚠️ Không parse được JSON ({t_elapsed:.1f}s), dùng fallback", flush=True)
             except Exception as exc:
-                print(f"ℹ️ Trích xuất khía cạnh sư phạm batch {index // batch_size + 1}: {exc}")
+                t_elapsed = time.time() - t_start
+                print(f" -> ❌ Lỗi ({t_elapsed:.1f}s: {exc}), dùng fallback", flush=True)
 
             # Ensure complete fallback for any unextracted concepts
             for concept_item in batch:
@@ -302,6 +356,15 @@ CHỈ XUẤT DUY NHẤT 1 MẢNG JSON HỢP LỆ VỚI CẤU TRÚC:
                             "probe_question": f"Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
                         }
                     }
+
+        # Lưu kết quả vào cache đĩa để tái sử dụng tức thì cho các lần build sau
+        if cache_file and results:
+            try:
+                with open(cache_file, "w", encoding="utf-8") as f:
+                    json.dump(results, f, ensure_ascii=False, indent=2)
+                print(f"   💾 Đã lưu kết quả trích xuất vào cache: {cache_file.name}", flush=True)
+            except Exception as e:
+                print(f"   ⚠️ Lỗi lưu cache: {e}", flush=True)
 
         return results
 

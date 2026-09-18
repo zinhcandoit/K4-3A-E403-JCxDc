@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -55,6 +55,28 @@ def read_root():
         "active_track": engine.graph_service.current_track,
         "endpoints": ["/api/lessons", "/api/switch_lesson", "/api/chat", "/api/history", "/api/progress", "/api/graph", "/api/reset"]
     }
+
+
+@app.websocket("/")
+@app.websocket("/ws")
+async def websocket_root_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint hỗ trợ kết nối realtime/healthcheck cho các client
+    hoặc browser extension kết nối tới root WebSocket mà không bị lỗi 403.
+    """
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(json.dumps({
+                "status": "online",
+                "service": "VLearn Track D3 Socratic Engine",
+                "received": data
+            }, ensure_ascii=False))
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
 
 
 @app.get("/api/lessons")
