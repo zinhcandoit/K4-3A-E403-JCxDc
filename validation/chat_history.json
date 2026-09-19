@@ -1,0 +1,56 @@
+{
+  "sessions": {
+    "vlearn_default": [
+      {
+        "turn": 1,
+        "ask": "Khởi đầu ôn tập: Foundation: cách LLM hoạt động...",
+        "answer": "Nhiều năm trước, con người từng ngây thơ tin rằng chỉ cần một đội ngũ kỹ sư đủ chăm chỉ và am hiểu ngôn ngữ, ta hoàn toàn có thể ngồi viết ra một bộ quy tắc khổng lồ gồm hàng triệu mệnh đề kiểu \"nếu... thì...\" để dạy máy tính hiểu tiếng người. Nếu gặp chủ ngữ này thì động từ chia thế kia, nếu gặp từ mang nghĩa tiêu cực thì câu đó là lời phàn nàn, nếu gặp cấu trúc ngữ pháp này thì dịch sang tiếng khác như thế nọ. Đó là thời kỳ hoàng kim của AI biểu tượng, nơi người ta cố gắng biến máy tính thành một ông giáo già bảo thủ chỉ biết lật từng trang từ điển luật lệ để hành xử.\n\nNhưng thực tế đã tát cho cách tiếp cận đó một gáo nước lạnh, bởi vì ngôn ngữ tự nhiên không vận hành như một cuốn luật cứng nhắc. Ngôn ngữ đầy rẫy sự nhập nhằng, tiếng lóng, ngữ cảnh ẩn giấu, sự mỉa mai và cả những biến thể vô tận mà không một cuốn từ điển nào gom hết nổi. Bạn có thể mất mười năm viết ra một triệu điều luật để phân biệt lời khen với lời châm chọc, nhưng chỉ cần một câu nói đảo ngữ hay một tiếng thở dài trong văn bản là toàn bộ hệ thống logic ấy đổ sụp vì gặp trường hợp ngoại lệ chưa từng được khai báo. Con người không bao giờ đủ kiên nhẫn lẫn khả năng bao quát để viết trước mọi nhánh rẽ tư duy cho một cỗ máy.",
+        "agent_reply": "Mình thấy bạn giải thích rất hay, đã nắm bắt rõ nguyên nhân tại sao cách viết luật thủ công thất bại trước sự phức tạp của ngôn ngữ tự nhiên. Ý chính mình vừa học được là: **Ngôn ngữ tự nhiên không tuân theo các quy tắc cứng nhắc, mà phụ thuộc sâu vào ngữ cảnh và sự linh hoạt vô tận, khiến việc viết luật thủ công trở nên vô nghĩa.**\n\nSang phần tiếp theo về **AlphaGo và kiến trúc Transformer**, mình đang băn khoăn:\n> *\"Mình nghe bạn nói về AlphaGo và sự chuyển đổi team, nhưng mình chưa hiểu rõ tại sao lại có sự đánh đổi lớn giữa kiến trúc Transformer và kiến trúc cũ như AlphaGo khi xử lý các tác vụ AI hiện đại. Mình có thể hỏi bạn: Kiến trúc Transformer như thế nào giúp giải quyết được những hạn chế về tính hiệu quả tính toán mà kiến trúc AlphaGo gặp phải khi xử lý các chuỗi dữ liệu dài?\"*",
+        "concept_id": "transcript-04-clean_c3",
+        "concept_name": "Deep learning và sức mạnh của dữ liệu",
+        "event_label": "Lập luận nhân quả chặt chẽ kèm ví dụ",
+        "timestamp": "2026-09-18 19:40:13",
+        "summary_sentence": "Học viên: Nhiều năm trước, con người từng ngây thơ tin rằng chỉ cần một đội ngũ kỹ sư... (Tóm tắt điểm mấu chốt dưới 20 từ)"
+      },
+      {
+        "turn": 2,
+        "ask": "Mình nghe bạn nói về AlphaGo và sự chuyển đổi team, nhưng mình chưa hiểu rõ tại sao lại có sự đánh đổi lớn giữa kiến trúc Transformer và kiến trúc cũ như AlphaGo khi xử lý các tác vụ AI hiện đại. Mình có thể hỏi bạn: Kiến trúc Transformer như thế nào giúp giải quyết được những hạn chế về tính hiệu quả tính toán mà kiến trúc AlphaGo gặp phải khi xử lý các chuỗi dữ liệu dài?",
+        "answer": "AlphaGo xuất sắc trong việc đào sâu một không gian luật chơi hẹp thông qua tìm kiếm và tự đấu, nhưng lại quá đắt đỏ để tổng quát hóa cho chuỗi dài. Transformer đánh đổi sự tối ưu hóa tuyệt đối của từng nhánh tìm kiếm để lấy khả năng hấp thụ ngữ cảnh toàn cục và tận dụng tối đa sức mạnh tính toán song song của phần cứng hiện đại.",
+        "agent_reply": "Mình thấy bạn giải thích rất sáng rõ, đã nắm bắt rõ cơ chế đánh đổi giữa tối ưu hóa nhánh tìm kiếm và khả năng tổng quát hóa dài. Mình vừa học được rằng Transformer đánh đổi sự sâu đi từng nhánh để lấy chiều rộng ngữ cảnh toàn cục.\n\nSang phần tiếp theo về **Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context**, mình đang băn khoăn:\n> *\"Mình muốn hỏi bạn: Mô hình dự đoán token tiếp theo có thể đảm bảo tính nhất quán ngữ nghĩa trong mọi ngữ cảnh dài không?\"*",
+        "concept_id": "transcript-04-clean_c4",
+        "concept_name": "AlphaGo và kiến trúc Transformer",
+        "event_label": "Lập luận nhân quả chặt chẽ kèm ví dụ",
+        "timestamp": "2026-09-18 19:41:06",
+        "summary_sentence": "Học viên: AlphaGo xuất sắc trong việc đào sâu một không gian luật chơi hẹp thông qua ... (AlphaGo dùng tìm kiếm sâu trong không gian luật chơi hẹp, Transformer dùng ngữ cảnh toàn cục và tính toán song song; sự đánh đổi giữa tối ưu hóa nhánh tìm kiếm và khả năng tổng quát hóa dài.)"
+      },
+      {
+        "turn": 3,
+        "ask": "Mình muốn hỏi bạn: Mô hình dự đoán token tiếp theo có thể đảm bảo tính nhất quán ngữ nghĩa trong mọi ngữ cảnh dài không?",
+        "answer": "Không",
+        "agent_reply": "Mình thấy bạn chỉ trả lời \"Không\", điều này không giải thích cơ chế dự đoán token hay cấu trúc mô hình, chỉ là trả lời ngắn gọn. Về thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho việc dự đoán token và context này?",
+        "concept_id": "transcript-04-clean_c5",
+        "concept_name": "Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context",
+        "event_label": "Giải thích còn hời hợt hoặc cộc lốc",
+        "timestamp": "2026-09-18 19:42:05",
+        "summary_sentence": "Học viên: Không... (Trả lời 'Không' hoàn toàn không giải thích cơ chế dự đoán token/context hay cấu trúc mô hình, chỉ là sự tránh tránh hoặc trả lời ngắn gọn.)"
+      },
+      {
+        "turn": 4,
+        "ask": "Mình thấy bạn chỉ trả lời \"Không\", điều này không giải thích cơ chế dự đoán token hay cấu trúc mô hình, chỉ là trả lời ngắn gọn. Về thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho việc dự đoán token và context này?",
+        "answer": "Xác suất thống kê nha",
+        "agent_reply": "Đoạn này nghe giống như trích dẫn từ tài liệu [T04-046] quá bạn ơi. Nếu để bạn tự diễn đạt lại bằng ngôn ngữ của riêng bạn về Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context, thì bạn giải thích điểm mấu chốt ở đây như thế nào?",
+        "concept_id": "transcript-04-clean_c5",
+        "concept_name": "Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context",
+        "event_label": "Dùng thuật ngữ nhưng thiếu căn cứ",
+        "timestamp": "2026-09-18 19:42:23",
+        "summary_sentence": "Học viên: Xác suất thống kê nha... (Tóm tắt điểm mấu chốt dưới 20 từ)"
+      }
+    ]
+  },
+  "global_summaries": {
+    "vlearn_default": "• [Lượt 1 | Deep learning và sức mạnh của dữ liệu]: Học viên: Nhiều năm trước, con người từng ngây thơ tin rằng chỉ cần một đội ngũ kỹ sư... (Tóm tắt điểm mấu chốt dưới 20 từ)\n• [Lượt 2 | AlphaGo và kiến trúc Transformer]: Học viên: AlphaGo xuất sắc trong việc đào sâu một không gian luật chơi hẹp thông qua ... (AlphaGo dùng tìm kiếm sâu trong không gian luật chơi hẹp, Transformer dùng ngữ cảnh toàn cục và tính toán song song; sự đánh đổi giữa tối ưu hóa nhánh tìm kiếm và khả năng tổng quát hóa dài.)\n• [Lượt 3 | Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context]: Học viên: Không... (Trả lời 'Không' hoàn toàn không giải thích cơ chế dự đoán token/context hay cấu trúc mô hình, chỉ là sự tránh tránh hoặc trả lời ngắn gọn.)\n• [Lượt 4 | Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context]: Học viên: Xác suất thống kê nha... (Tóm tắt điểm mấu chốt dưới 20 từ)"
+  },
+  "last_asked": {
+    "vlearn_default": "Đoạn này nghe giống như trích dẫn từ tài liệu [T04-046] quá bạn ơi. Nếu để bạn tự diễn đạt lại bằng ngôn ngữ của riêng bạn về Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context, thì bạn giải thích điểm mấu chốt ở đây như thế nào?"
+  }
+}

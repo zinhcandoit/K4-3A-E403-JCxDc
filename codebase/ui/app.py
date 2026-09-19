@@ -722,7 +722,7 @@ if "messages" in st.session_state and st.session_state.messages:
 
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [build_initial_topic_message(current_feynman_concept, current_lesson_title)]
+    st.session_state.messages = []
 
 
 if "events" not in st.session_state:
@@ -790,7 +790,7 @@ with st.sidebar:
         st.session_state.cached_progress = call_api_progress(selected_track_id)
         st.session_state._progress_track = selected_track_id
         lesson_title = lesson_map.get(selected_track_id, {}).get("title", selected_track_id)
-        st.session_state.messages = [build_initial_topic_message(new_concept, lesson_title)]
+        st.session_state.messages = []
         st.session_state.is_ended = False
         st.session_state.session_finished = False
         st.rerun()
@@ -818,7 +818,7 @@ with st.sidebar:
             st.session_state.cached_progress = call_api_progress(st.session_state.selected_track)
             st.session_state._progress_track = st.session_state.selected_track
             lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
-            st.session_state.messages = [build_initial_topic_message(current_feynman_concept, lesson_title)]
+            st.session_state.messages = []
             st.session_state.is_ended = False
             st.session_state.session_finished = False
             st.rerun()
@@ -972,7 +972,7 @@ if st.session_state.active_view == "chat":
 
                 current_feynman_concept = engine.get_current_feynman_concept()
                 lesson_title = lesson_map.get(st.session_state.selected_track, {}).get("title", "")
-                st.session_state.messages = [build_initial_topic_message(current_feynman_concept, lesson_title)]
+                st.session_state.messages = []
                 st.session_state.is_ended = False
                 st.session_state.session_finished = False
                 st.rerun()
@@ -986,6 +986,7 @@ if st.session_state.active_view == "chat":
 
     # Khung cuộn tin nhắn ChatGPT
     chat_box = st.container()
+    intro_placeholder = None
     with chat_box:
         for msg in st.session_state.messages:
             role = msg["role"]
@@ -1001,6 +1002,9 @@ if st.session_state.active_view == "chat":
                         <span class="tag-badge {tag_color}">{msg.get('event_label')}</span>
                     </div>
                     """, unsafe_allow_html=True)
+
+        if not st.session_state.messages:
+            intro_placeholder = st.empty()
 
     # Hiển thị The End of Graph nếu chạm đích (khi đã đi qua hết các concept của bài học hiện tại)
     if st.session_state.is_ended:
@@ -1045,7 +1049,7 @@ if st.session_state.active_view == "chat":
                         st.session_state.final_summary = ""
                         switch_info = call_api_switch_lesson(other_lesson["track"], session_id="vlearn_default")
                         new_concept = switch_info.get("concept", engine.get_current_feynman_concept())
-                        st.session_state.messages = [build_initial_topic_message(new_concept, other_lesson["title"])]
+                        st.session_state.messages = []
                         st.session_state.is_ended = False
                         st.rerun()
             else:
@@ -1075,9 +1079,8 @@ if st.session_state.active_view == "chat":
                                 height=36
                             )
                         with col_send:
-                            has_text = bool(user_typed_prompt.strip())
                             st.markdown('<div class="chatgpt-send-btn">', unsafe_allow_html=True)
-                            send_submitted = st.button("↑", key="btn_send_prompt", help="Gửi tin nhắn", disabled=not has_text)
+                            send_submitted = st.button("↑", key="btn_send_prompt", help="Gửi tin nhắn")
                             st.markdown('</div>', unsafe_allow_html=True)
 
                 voice_key = f"voice_input_{st.session_state.get('voice_key_idx', 0)}"
@@ -1105,13 +1108,28 @@ if st.session_state.active_view == "chat":
                             st.toast("⚠️ Không nhận diện được âm thanh. Hãy thử nói lại rõ ràng hơn.", icon="⚠️")
                             st.rerun()
 
-                if send_submitted and has_text:
+                if send_submitted and user_typed_prompt.strip():
                     student_input = user_typed_prompt.strip()
                     st.session_state.prompt_version = st.session_state.get("prompt_version", 0) + 1
                     st.session_state[f"user_prompt_{st.session_state.prompt_version}"] = ""
                     st.session_state.voice_key_idx = st.session_state.get("voice_key_idx", 0) + 1
 
             st.markdown("<p style='text-align:center; font-size:11px; color:#666; margin:4px 0 0 0;'>VLearn — Nền tảng học tập tương tác chủ động.</p>", unsafe_allow_html=True)
+
+        # Tải lời mở đầu & gợi ý từ backend sau khi toàn bộ UI đã được hiển thị xong
+        if intro_placeholder is not None:
+            with intro_placeholder.container():
+                with st.chat_message("assistant", avatar="🎓"):
+                    with st.spinner("⚡ Alex đang chuẩn bị các hướng gợi ý ôn tập..."):
+                        init_msg = build_initial_topic_message(current_feynman_concept, current_lesson_title)
+                    st.session_state.messages.append(init_msg)
+                    st.markdown(f"<div class='final-reply-text'>{init_msg['content']}</div>", unsafe_allow_html=True)
+                    tag_color = "tag-orange"
+                    st.markdown(f"""
+                    <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+                        <span class="tag-badge {tag_color}">{init_msg.get('event_label', 'Gợi ý chủ đề 🎓')}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
         if student_input:
             user_msg = {

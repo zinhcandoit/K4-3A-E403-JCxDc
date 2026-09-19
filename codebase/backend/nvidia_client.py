@@ -77,14 +77,15 @@ class NvidiaAIClient:
 
     def get_llm(
         self,
-        enable_thinking: bool = True,
+        enable_thinking: Optional[bool] = None,
         reasoning_budget: Optional[int] = None,
         temperature: Optional[float] = None,
     ) -> ChatNVIDIA:
         """Return ChatNVIDIA instance for LangChain integration."""
         temp = temperature if temperature is not None else self.temperature
         model_kwargs: Dict[str, Any] = {}
-        if enable_thinking:
+        is_thinking = enable_thinking if enable_thinking is not None else getattr(settings, "NVIDIA_ENABLE_THINKING", True)
+        if is_thinking:
             model_kwargs["chat_template_kwargs"] = {"enable_thinking": True}
             model_kwargs["reasoning_budget"] = reasoning_budget or self.reasoning_budget
         else:
@@ -115,11 +116,12 @@ class NvidiaAIClient:
         prompt: str,
         system_prompt: Optional[str] = None,
         reasoning_budget: Optional[int] = None,
+        enable_thinking: Optional[bool] = None,
     ) -> Generator[Dict[str, str], None, None]:
         """
         Stream chunks yielding both reasoning tokens and response content:
         {"reasoning": str, "content": str}
-        Uses reasoning_budget for deep reasoning.
+        Uses reasoning_budget for deep reasoning when thinking is enabled.
         """
         self.rate_limiter.acquire()
         messages: List[Dict[str, str]] = []
@@ -127,7 +129,14 @@ class NvidiaAIClient:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        budget = reasoning_budget or self.reasoning_budget
+        is_thinking = enable_thinking if enable_thinking is not None else getattr(settings, "NVIDIA_ENABLE_THINKING", True)
+        extra_body: Dict[str, Any] = {
+            "chat_template_kwargs": {"enable_thinking": is_thinking}
+        }
+        if is_thinking:
+            budget = reasoning_budget or self.reasoning_budget
+            extra_body["reasoning_budget"] = budget
+
         try:
             stream = self.openai_client.chat.completions.create(
                 model=self.model_name,
@@ -135,10 +144,7 @@ class NvidiaAIClient:
                 temperature=self.temperature,
                 top_p=settings.NVIDIA_TOP_P,
                 max_tokens=self.max_tokens,
-                extra_body={
-                    "chat_template_kwargs": {"enable_thinking": True},
-                    "reasoning_budget": budget,
-                },
+                extra_body=extra_body,
                 stream=True,
             )
             for chunk in stream:
@@ -157,6 +163,7 @@ class NvidiaAIClient:
         prompt: str,
         system_prompt: Optional[str] = None,
         reasoning_budget: Optional[int] = None,
+        enable_thinking: Optional[bool] = None,
     ) -> Dict[str, str]:
         """Generate response with thinking extracted, retrying on 429."""
         max_retries = 3
@@ -170,6 +177,7 @@ class NvidiaAIClient:
                     prompt=prompt,
                     system_prompt=system_prompt,
                     reasoning_budget=reasoning_budget,
+                    enable_thinking=enable_thinking,
                 ):
                     if chunk["reasoning"]:
                         reasoning_chunks.append(chunk["reasoning"])
@@ -207,6 +215,7 @@ class NvidiaAIClient:
         system_prompt: Optional[str] = None,
         enable_thinking: bool = False,
         reasoning_budget: Optional[int] = None,
+        timeout: Optional[float] = None,
     ) -> str:
         """
         Generate text response:
@@ -227,7 +236,7 @@ class NvidiaAIClient:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        timeout_val = getattr(settings, "LLM_TIMEOUT", 60.0) or 60.0
+        timeout_val = timeout if timeout is not None else (getattr(settings, "LLM_TIMEOUT", 60.0) or 60.0)
         try:
             resp = self.openai_client.chat.completions.create(
                 model=self.model_name,
@@ -247,8 +256,13 @@ class NvidiaAIClient:
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
+        enable_thinking: Optional[bool] = None,
     ) -> Generator[str, None, None]:
         """Stream content tokens only."""
-        for chunk in self.generate_stream_chunks(prompt=prompt, system_prompt=system_prompt):
+        for chunk in self.generate_stream_chunks(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            enable_thinking=enable_thinking
+        ):
             if chunk["content"]:
                 yield chunk["content"]

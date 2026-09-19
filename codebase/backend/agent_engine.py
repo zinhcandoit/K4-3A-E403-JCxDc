@@ -347,18 +347,24 @@ class SocraticAgentEngine:
             if not reply or len(reply.strip()) < 10:
                 reply = "Ý bạn giải thích nghe rất có lý, nhưng ở khía cạnh kỹ thuật cụ thể thì cơ chế bên dưới xử lý bài toán này như thế nào? Bạn phân tích sâu hơn một chút giúp mình nhé."
 
-            # Enforce max probing turn limit
-            if not is_mastered and turn_count >= settings.MAX_PROBING_TURNS:
-                reply += f"\n\n(Gợi ý nhỏ: Mình thấy chỗ này còn hơi trừu tượng, bạn thử mở lại {citation} xem phần cơ chế cốt lõi rồi hai đứa mình cùng bàn tiếp nhé!)"
+            # Enforce max probing turn limit & concept progression
+            should_advance = is_mastered or (turn_count >= settings.MAX_PROBING_TURNS)
+            if should_advance:
+                if is_mastered:
+                    event_type = "causal_breakthrough"
+                    detail = f"Đã làm chủ {concept_name}"
+                else:
+                    event_type = "pedagogical_scaffold"
+                    detail = f"Chốt kiến thức và chuyển tiếp {concept_name}"
+                    reply += f"\n\n*(Gợi ý chốt lại: Về cốt lõi ở phần này, tài liệu {citation} nhấn mạnh: \"{core_truth}\". Hai đứa mình cùng đi tiếp nhé!)*"
 
-            if is_mastered:
-                event_type = "causal_breakthrough"
-                detail = f"Đã làm chủ {concept_name}"
                 try:
                     self.graph_service.graph.query(f"MATCH (fc:FeynmanConcept {{id: '{concept_id}'}}) SET fc.status = 'COVERED'")
                 except Exception:
                     pass
                 self.graph_service.mark_concept_covered(concept_id)
+                if self.graph_service and self.graph_service.current_track:
+                    self._concept_cache.pop(self.graph_service.current_track, None)
                 is_end_of_graph, end_message, alternative_paths = self.graph_service.is_end_of_graph()
 
                 if not is_end_of_graph:
@@ -584,7 +590,6 @@ class SocraticAgentEngine:
                 conversation_history=memory_context
             )
 
-            is_inside_think = False
             for chunk_data in self.nvidia_client.generate_stream_chunks(
                 prompt=probing_prompt,
                 system_prompt=PROTEGE_SYSTEM_PROMPT
@@ -595,20 +600,8 @@ class SocraticAgentEngine:
 
                 content = chunk_data.get("content", "")
                 if content:
-                    if "<think>" in content:
-                        is_inside_think = True
-                        content = content.replace("<think>", "")
-                    if "</think>" in content:
-                        is_inside_think = False
-                        parts = content.split("</think>")
-                        model_thinking_chunks.append(parts[0])
-                        content = parts[1] if len(parts) > 1 else ""
-
-                    if is_inside_think:
-                        model_thinking_chunks.append(content)
-                    elif content:
-                        reply_chunks.append(content)
-                        yield {"type": "token", "chunk": content}
+                    reply_chunks.append(content)
+                    yield {"type": "token", "chunk": content}
 
             reply = "".join(reply_chunks).strip()
             if not reply or len(reply) < 10:
@@ -616,15 +609,19 @@ class SocraticAgentEngine:
                 yield {"type": "token", "chunk": fallback_msg}
                 reply = fallback_msg
 
-            if not is_mastered and turn_count >= settings.MAX_PROBING_TURNS:
-                hint_str = f"\n\n(Gợi ý nhỏ: Mình thấy chỗ này còn hơi trừu tượng, bạn thử mở lại {citation} xem phần cơ chế cốt lõi rồi hai đứa mình cùng bàn tiếp nhé!)"
-                reply += hint_str
-                yield {"type": "token", "chunk": hint_str}
-
+            should_advance = is_mastered or (turn_count >= settings.MAX_PROBING_TURNS)
             is_end_of_graph = False
-            if is_mastered:
-                event_type = "causal_breakthrough"
-                detail = f"Đã làm chủ {concept_name}"
+            if should_advance:
+                if is_mastered:
+                    event_type = "causal_breakthrough"
+                    detail = f"Đã làm chủ {concept_name}"
+                else:
+                    event_type = "pedagogical_scaffold"
+                    detail = f"Chốt kiến thức và chuyển tiếp {concept_name}"
+                    bridge_str = f"\n\n*(Gợi ý chốt lại: Về cốt lõi ở phần này, tài liệu {citation} nhấn mạnh: \"{core_truth}\". Hai đứa mình cùng đi tiếp nhé!)*"
+                    reply += bridge_str
+                    yield {"type": "token", "chunk": bridge_str}
+
                 try:
                     self.graph_service.graph.query(f"MATCH (fc:FeynmanConcept {{id: '{concept_id}'}}) SET fc.status = 'COVERED'")
                 except Exception:

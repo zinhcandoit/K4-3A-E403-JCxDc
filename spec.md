@@ -149,6 +149,8 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
   | Lượt chạy | Thời điểm | % Đạt | Số case đạt | Lỗi điển hình | Hướng xử lý |
   |---|---|---|---|---|---|
   | Lượt 1 | 20h30 17/9 | 15% | 3/20 | Model không sinh ra được hết câu | Tăng max_tokens lên |
+  | Lượt 2 | 16h30 18/9 | 55% | 11/20 | Model sinh sẵn câu trả lời | Guardrail kĩ hơn |
+
 
 ## §8. Phân công & kế hoạch
 - Phân công có tên:
@@ -166,3 +168,5 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 | 16/9 19:15 | Chốt hướng Track D3 và bảng Canvas | Thống nhất tập trung giải quyết việc học viên tưởng mình hiểu nhưng không giải thích được |
 | 16/9 21:00 | Chốt luồng trải nghiệm 4 bước và mức tự động hóa conditional | Tránh để AI tự động giảng giải thay vì buộc học viên phải tự nói |
 | 17/9 20h30 | Chạy kiểm thử Lượt 1 (đạt 3/20) | Lỗi: model không sinh ra được hết câu, hướng xử lý: tăng max_tokens lên |
+| 18/9 16h30 | Chạy kiểm thử Lượt 2 (đạt 11/20) | Lỗi: model sinh sẵn câu trả lời, hướng xử lý: Guardrail kĩ hơn |
+| 18/9 20h00 | Thêm Starter Prompts và siết Guardrail Protégé | Phản hồi từ 2 tester Thiên & Ngọc trong `validation/`: Alex đôi chỗ tự giảng bài thay người dạy và giao diện mở đầu chưa có câu mớm |

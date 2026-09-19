@@ -26,7 +26,8 @@ class RealDataLoader:
     def __init__(self, base_dir: Optional[Path] = None):
         self.transcript_dir = settings.TRANSCRIPT_DIR
         self.input_dir = settings.INPUT_DIR
-        self.nvidia_client = NvidiaAIClient()
+        # Đẩy max_tokens lên 16384 riêng cho các tác vụ trích xuất đồ thị sư phạm
+        self.nvidia_client = NvidiaAIClient(max_tokens=16384)
 
     def _extract_json_array_from_text(self, text: str) -> List[str]:
         """Safely extract JSON array from LLM response text."""
@@ -244,7 +245,8 @@ CHỈ TRẢ VỀ DUY NHẤT 1 MẢNG JSON CÁC TIÊU ĐỀ ĐƯỢC CHỌN (KHÔ
                     print(f"   ℹ️ Đọc cache thất bại ({exc}), bắt đầu trích xuất mới...", flush=True)
 
         results: Dict[str, Dict[str, Any]] = {}
-        batch_size = 5
+        # Gom nhóm 2 khái niệm/batch để model phản hồi nhanh (25-35s) và không bị quá tải/timeout
+        batch_size = 2
         total_concepts = len(concepts)
         total_batches = (total_concepts + batch_size - 1) // batch_size
         print(f"   📊 Tổng cộng {total_concepts} khái niệm cần trích xuất ({total_batches} batches, mỗi batch {batch_size} concepts)...", flush=True)
@@ -308,7 +310,8 @@ CHỈ XUẤT DUY NHẤT 1 MẢNG JSON HỢP LỆ VỚI CẤU TRÚC:
             try:
                 raw_response = self.nvidia_client.generate_text(
                     prompt=prompt,
-                    system_prompt="Bạn là Chuyên gia Thiết kế Đồ thị Sư phạm AI. Chỉ xuất duy nhất một mảng JSON."
+                    system_prompt="Bạn là Chuyên gia Thiết kế Đồ thị Sư phạm AI. Chỉ xuất duy nhất một mảng JSON.",
+                    timeout=180.0
                 )
                 if raw_response:
                     aspects_list = self._extract_json_array_from_text(raw_response)

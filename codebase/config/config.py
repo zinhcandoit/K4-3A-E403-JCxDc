@@ -40,11 +40,11 @@ class Config:
 
     # NVIDIA NIM LLM Settings
     NVIDIA_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b"
-    NVIDIA_MAX_TOKENS = 512
-    NVIDIA_REASONING_BUDGET = 1024
-    NVIDIA_TEMPERATURE = 0.2
+    NVIDIA_MAX_TOKENS = 1024
+    NVIDIA_REASONING_BUDGET = 2048
+    NVIDIA_TEMPERATURE = 0.1
     NVIDIA_TOP_P = 0.95
-    NVIDIA_ENABLE_THINKING = True
+    NVIDIA_ENABLE_THINKING = False
     MAX_RPM = 36
 
     # Pedagogical & Graph Settings

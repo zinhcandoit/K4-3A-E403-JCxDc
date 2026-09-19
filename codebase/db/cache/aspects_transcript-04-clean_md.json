@@ -1,0 +1,427 @@
+{
+  "transcript-04-clean_c1": {
+    "id": "transcript-04-clean_c1",
+    "pitfall": {
+      "name": "Ngộ nhận về Nội dung ngày học và bức tranh tổng quan về AI",
+      "pitfall_text": "Học viên thường nghĩ Nội dung ngày học và bức tranh tổng quan về AI hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Nội dung ngày học và bức tranh tổng quan về AI'?",
+      "truth_hint": "Ngày hôm nay chúng ta sẽ đi qua một số nội dung như thế này. Đầu tiên mình đi một vòng nhìn về bức tranh AI, định nghĩa một số thuật ngữ với nhau."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Nội dung ngày học và bức tranh tổng quan về AI",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Nội dung ngày học và bức tranh tổng quan về AI', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Nội dung ngày học và bức tranh tổng quan về AI",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Nội dung ngày học và bức tranh tổng quan về AI -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Nội dung ngày học và bức tranh tổng quan về AI'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Nội dung ngày học và bức tranh tổng quan về AI",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Nội dung ngày học và bức tranh tổng quan về AI.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c2": {
+    "id": "transcript-04-clean_c2",
+    "pitfall": {
+      "name": "Ngộ nhận về Lịch sử AI: Turing test và hai mùa đông",
+      "pitfall_text": "Học viên thường nghĩ Lịch sử AI: Turing test và hai mùa đông hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Lịch sử AI: Turing test và hai mùa đông'?",
+      "truth_hint": "Bây giờ chúng ta đi sâu hơn, đi qua một chút về lịch sử nhá. Thực ra AI không phải mới đâu — có khoảng 70 năm rồi."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Lịch sử AI: Turing test và hai mùa đông",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Lịch sử AI: Turing test và hai mùa đông', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Lịch sử AI: Turing test và hai mùa đông",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Lịch sử AI: Turing test và hai mùa đông -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Lịch sử AI: Turing test và hai mùa đông'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Lịch sử AI: Turing test và hai mùa đông",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Lịch sử AI: Turing test và hai mùa đông.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c3": {
+    "id": "transcript-04-clean_c3",
+    "pitfall": {
+      "name": "Ngộ nhận về Deep learning và sức mạnh của dữ liệu",
+      "pitfall_text": "Học viên thường nghĩ Deep learning và sức mạnh của dữ liệu hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Deep learning và sức mạnh của dữ liệu'?",
+      "truth_hint": "Ý tưởng khiến cho máy móc có thể học được rất nhiều dữ liệu là tái tạo được mạng neuron thần kinh giống như con người — đấy là nền tảng của deep learning. Sau khi con người đã thử "
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Deep learning và sức mạnh của dữ liệu",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Deep learning và sức mạnh của dữ liệu', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Deep learning và sức mạnh của dữ liệu",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Deep learning và sức mạnh của dữ liệu -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Deep learning và sức mạnh của dữ liệu'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Deep learning và sức mạnh của dữ liệu",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Deep learning và sức mạnh của dữ liệu.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c4": {
+    "id": "transcript-04-clean_c4",
+    "pitfall": {
+      "name": "Ngộ nhận về AlphaGo và kiến trúc Transformer",
+      "pitfall_text": "Học viên thường nghĩ AlphaGo và kiến trúc Transformer hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'AlphaGo và kiến trúc Transformer'?",
+      "truth_hint": "Rồi, đây là một sự kiện mà mình rất thích. Ở đây mọi người có ai biết AlphaGo không?"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong AlphaGo và kiến trúc Transformer",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'AlphaGo và kiến trúc Transformer', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối AlphaGo và kiến trúc Transformer",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của AlphaGo và kiến trúc Transformer -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'AlphaGo và kiến trúc Transformer'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của AlphaGo và kiến trúc Transformer",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành AlphaGo và kiến trúc Transformer.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c5": {
+    "id": "transcript-04-clean_c5",
+    "pitfall": {
+      "name": "Ngộ nhận về Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context",
+      "pitfall_text": "Học viên thường nghĩ Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context'?",
+      "truth_hint": "Rồi, bây giờ mình mổ xẻ các mô hình ngôn ngữ lớn ra một chút. Bản chất các sản phẩm ChatGPT, Claude, Gemini được xây dựng dựa trên một mô hình ngôn ngữ lớn — cái gọi là trái tim, b"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Mổ xẻ mô hình ngôn ngữ lớn: dự đoán token và context.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c6": {
+    "id": "transcript-04-clean_c6",
+    "pitfall": {
+      "name": "Ngộ nhận về Attention, multi-head và bài học quản lý context",
+      "pitfall_text": "Học viên thường nghĩ Attention, multi-head và bài học quản lý context hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Attention, multi-head và bài học quản lý context'?",
+      "truth_hint": "Bởi vì thực ra — mình sẽ quay trở lại khái niệm attention trong kiến trúc Transformer ban đầu ấy — bản chất là để một mô hình có thể làm được việc này rất tốt, thì nó phải chú ý đư"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Attention, multi-head và bài học quản lý context",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Attention, multi-head và bài học quản lý context', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Attention, multi-head và bài học quản lý context",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Attention, multi-head và bài học quản lý context -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Attention, multi-head và bài học quản lý context'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Attention, multi-head và bài học quản lý context",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Attention, multi-head và bài học quản lý context.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c7": {
+    "id": "transcript-04-clean_c7",
+    "pitfall": {
+      "name": "Ngộ nhận về Tham số, RLHF và ngành gán nhãn dữ liệu",
+      "pitfall_text": "Học viên thường nghĩ Tham số, RLHF và ngành gán nhãn dữ liệu hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Tham số, RLHF và ngành gán nhãn dữ liệu'?",
+      "truth_hint": "Rồi, có một từ nữa mà có thể hay gặp phải, đấy là các tham số — parameter. Các mô hình mới khi công bố thì hay có một cái là đã được đào tạo trên bao nhiêu parameter."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Tham số, RLHF và ngành gán nhãn dữ liệu",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Tham số, RLHF và ngành gán nhãn dữ liệu', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Tham số, RLHF và ngành gán nhãn dữ liệu",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Tham số, RLHF và ngành gán nhãn dữ liệu -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Tham số, RLHF và ngành gán nhãn dữ liệu'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Tham số, RLHF và ngành gán nhãn dữ liệu",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Tham số, RLHF và ngành gán nhãn dữ liệu.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c8": {
+    "id": "transcript-04-clean_c8",
+    "pitfall": {
+      "name": "Ngộ nhận về Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình",
+      "pitfall_text": "Học viên thường nghĩ Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình'?",
+      "truth_hint": "Ở đây có một ví dụ mình thấy rất là hay nên mình cũng đưa vào, để có thể trả lời câu hỏi là: thế thì sau tất cả những gì chúng ta vừa thấy — cho LLM học rất nhiều dữ liệu để nhìn r"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Thí nghiệm bàn cờ, giới hạn kiến thức và các mức tiếp cận mô hình.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c9": {
+    "id": "transcript-04-clean_c9",
+    "pitfall": {
+      "name": "Ngộ nhận về Temperature và top-k/top-p",
+      "pitfall_text": "Học viên thường nghĩ Temperature và top-k/top-p hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Temperature và top-k/top-p'?",
+      "truth_hint": "Temperature hoạt động theo kiểu: nếu temperature bằng 0, mô hình sẽ luôn luôn lấy xác suất cao nhất. Các bạn có thể chạy thử một mô hình với temperature bằng 0 thì kết quả trả ra g"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Temperature và top-k/top-p",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Temperature và top-k/top-p', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Temperature và top-k/top-p",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Temperature và top-k/top-p -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Temperature và top-k/top-p'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Temperature và top-k/top-p",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Temperature và top-k/top-p.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c10": {
+    "id": "transcript-04-clean_c10",
+    "pitfall": {
+      "name": "Ngộ nhận về Từ mô hình đến AI agent",
+      "pitfall_text": "Học viên thường nghĩ Từ mô hình đến AI agent hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Từ mô hình đến AI agent'?",
+      "truth_hint": "Xuất phát điểm của chúng ta là từ một mô hình thôi. Bây giờ chúng ta làm cho mô hình có tay, có chân, có bộ não, có thêm nhiều ngữ cảnh khác để làm được việc — đấy là con đường đi "
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Từ mô hình đến AI agent",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Từ mô hình đến AI agent', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Từ mô hình đến AI agent",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Từ mô hình đến AI agent -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Từ mô hình đến AI agent'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Từ mô hình đến AI agent",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Từ mô hình đến AI agent.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c11": {
+    "id": "transcript-04-clean_c11",
+    "pitfall": {
+      "name": "Ngộ nhận về Các lớp bao quanh LLM và tầm quan trọng của evaluation",
+      "pitfall_text": "Học viên thường nghĩ Các lớp bao quanh LLM và tầm quan trọng của evaluation hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Các lớp bao quanh LLM và tầm quan trọng của evaluation'?",
+      "truth_hint": "Bản thân LLM chỉ là một bộ não phía bên trong. Để bộ não này phát huy hết năng lực, nó cần các lớp lớn hơn bên ngoài."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Các lớp bao quanh LLM và tầm quan trọng của evaluation",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Các lớp bao quanh LLM và tầm quan trọng của evaluation', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Các lớp bao quanh LLM và tầm quan trọng của evaluation",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Các lớp bao quanh LLM và tầm quan trọng của evaluation -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Các lớp bao quanh LLM và tầm quan trọng của evaluation'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Các lớp bao quanh LLM và tầm quan trọng của evaluation",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Các lớp bao quanh LLM và tầm quan trọng của evaluation.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c12": {
+    "id": "transcript-04-clean_c12",
+    "pitfall": {
+      "name": "Ngộ nhận về Bức tranh thị trường mô hình và tốc độ thay đổi",
+      "pitfall_text": "Học viên thường nghĩ Bức tranh thị trường mô hình và tốc độ thay đổi hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Bức tranh thị trường mô hình và tốc độ thay đổi'?",
+      "truth_hint": "Mấy cái này chắc mình sẽ skip. Đây là một landscape các mô hình."
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Bức tranh thị trường mô hình và tốc độ thay đổi",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Bức tranh thị trường mô hình và tốc độ thay đổi', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Bức tranh thị trường mô hình và tốc độ thay đổi",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Bức tranh thị trường mô hình và tốc độ thay đổi -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Bức tranh thị trường mô hình và tốc độ thay đổi'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Bức tranh thị trường mô hình và tốc độ thay đổi",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Bức tranh thị trường mô hình và tốc độ thay đổi.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c13": {
+    "id": "transcript-04-clean_c13",
+    "pitfall": {
+      "name": "Ngộ nhận về Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek",
+      "pitfall_text": "Học viên thường nghĩ Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek'?",
+      "truth_hint": "Đây là làn sóng các mô hình mã nguồn mở của Trung Quốc — đây chỉ là các mô hình nổi tiếng thôi, thực tế đang rất nhiều. Nó nổi lên từ tầm cuối năm 2024 cho đến bây giờ; trước đấy t"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Làn sóng mã nguồn mở Trung Quốc và khoảnh khắc DeepSeek.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c14": {
+    "id": "transcript-04-clean_c14",
+    "pitfall": {
+      "name": "Ngộ nhận về Benchmark năng lực và xu hướng chi phí tính toán",
+      "pitfall_text": "Học viên thường nghĩ Benchmark năng lực và xu hướng chi phí tính toán hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Benchmark năng lực và xu hướng chi phí tính toán'?",
+      "truth_hint": "Đây là một bài test năng lực — một benchmark về software engineering. Các mô hình, đặc biệt là mô hình liên quan đến coding, thường luôn được đo trên bài test này: một bộ đo xem mô"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Benchmark năng lực và xu hướng chi phí tính toán",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Benchmark năng lực và xu hướng chi phí tính toán', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Benchmark năng lực và xu hướng chi phí tính toán",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Benchmark năng lực và xu hướng chi phí tính toán -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Benchmark năng lực và xu hướng chi phí tính toán'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Benchmark năng lực và xu hướng chi phí tính toán",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Benchmark năng lực và xu hướng chi phí tính toán.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c15": {
+    "id": "transcript-04-clean_c15",
+    "pitfall": {
+      "name": "Ngộ nhận về Chọn mô hình phù hợp với công việc",
+      "pitfall_text": "Học viên thường nghĩ Chọn mô hình phù hợp với công việc hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Chọn mô hình phù hợp với công việc'?",
+      "truth_hint": "Tiếp theo là một frame để chúng ta chọn các mô hình — mang tính tham khảo thôi, đây cũng là ví dụ một số mô hình chứ không phải toàn bộ. Mỗi mô hình mới ra đời sẽ luôn có bộ benchm"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Chọn mô hình phù hợp với công việc",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Chọn mô hình phù hợp với công việc', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Chọn mô hình phù hợp với công việc",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Chọn mô hình phù hợp với công việc -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Chọn mô hình phù hợp với công việc'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Chọn mô hình phù hợp với công việc",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Chọn mô hình phù hợp với công việc.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c16": {
+    "id": "transcript-04-clean_c16",
+    "pitfall": {
+      "name": "Ngộ nhận về Mixture of Experts",
+      "pitfall_text": "Học viên thường nghĩ Mixture of Experts hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Mixture of Experts'?",
+      "truth_hint": "Slide này lẽ ra phải để ở phía bên trên. Khi nãy trong phần lịch sử AI, mình có nhắc đến một đoạn người ta tiếp cận theo hướng xây dựng hệ chuyên gia — đấy là nền tảng của cách tiế"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Mixture of Experts",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Mixture of Experts', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Mixture of Experts",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Mixture of Experts -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Mixture of Experts'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Mixture of Experts",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Mixture of Experts.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  },
+  "transcript-04-clean_c17": {
+    "id": "transcript-04-clean_c17",
+    "pitfall": {
+      "name": "Ngộ nhận về Cơ bản về gọi API mô hình LLM",
+      "pitfall_text": "Học viên thường nghĩ Cơ bản về gọi API mô hình LLM hoạt động theo quy luật cứng nhắc mà không thấy được yếu tố xác suất và phạm vi ngữ cảnh.",
+      "probe_question": "Nếu chỉ theo cách hiểu thông thường, bạn giải thích thế nào về trường hợp mâu thuẫn của 'Cơ bản về gọi API mô hình LLM'?",
+      "truth_hint": "Phần cuối cùng của buổi chiều hôm nay mình sẽ nói qua thôi, ngày mai các bạn sẽ thực hành. Bạn nào đã gọi mô hình rồi thì sẽ quen; nhưng với những người chưa lần nào gọi các mô hìn"
+    },
+    "tradeoff": {
+      "name": "Sự đánh đổi trong Cơ bản về gọi API mô hình LLM",
+      "dimension_a": "Tốc độ xử lý & Khả năng mở rộng",
+      "dimension_b": "Chi phí tài nguyên & Rủi ro sai lệch",
+      "probe_question": "Khi tối ưu hóa cho 'Cơ bản về gọi API mô hình LLM', hệ thống phải đánh đổi điều gì về mặt chi phí hoặc độ chính xác?"
+    },
+    "mechanism": {
+      "name": "Cơ chế điều phối Cơ bản về gọi API mô hình LLM",
+      "causal_chain": "Đầu vào bài toán -> Cơ chế tính toán của Cơ bản về gọi API mô hình LLM -> Trọng số phân phối kết quả",
+      "probe_question": "Về mặt thuật toán bên dưới, cơ chế nào trực tiếp chịu trách nhiệm cho 'Cơ bản về gọi API mô hình LLM'?"
+    },
+    "counter_example": {
+      "name": "Trường hợp thực tế của Cơ bản về gọi API mô hình LLM",
+      "scenario": "Tình huống xử lý trường hợp biên hoặc dữ liệu đặc thù khi vận hành Cơ bản về gọi API mô hình LLM.",
+      "probe_question": "Bạn có thể đưa ra một ví dụ đời thường cụ thể chứng minh cơ chế này không?"
+    }
+  }
+}

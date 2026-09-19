@@ -8,10 +8,10 @@
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-| Trần Thu Phương | 2A202602734 | Đội trưởng | Giám sát, theo dõi thông  |
+| Trần Thu Phương | 2A202602734 | UI/UX Design | Thiết kế UI, thiết kế slide  |
 | Trần Thị Lan | 2A202602621 | Business Analyst | Thu thập khảo sát, phân tích painpoint và đề xuất giải pháp |
-| Nguyễn Phương Nam | 2A202602869 |  |  |
-| Thiều Quang Vinh | 2A202602877 | Technical Leader | Khảo sát và điền repo |
+| Nguyễn Phương Nam | 2A202602869 | Software Engineer | Xây dựng frontend và backend nhanh với FastAPI và Streamlit |
+| Thiều Quang Vinh | 2A202602877 | AI Engineer | Xây dựng giải pháp lưu trữ trên Graph Database và áp dụng AI cho chatbot |
 
 > Nhóm copy nguyên file README này về repo của mình, rồi điền bảng trên. Cột **Phần việc đảm nhiệm** ghi càng cụ thể càng tốt.
 

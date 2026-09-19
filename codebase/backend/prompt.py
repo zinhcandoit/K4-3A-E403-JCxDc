@@ -105,8 +105,8 @@ def build_protege_probing_prompt(
         # GOOD CASE CAO NHẤT: Học viên thấu suốt
         strategy = (
             "XUẤT SẮC (GOOD CASE): Học viên đã giải thích rất sáng rõ, có cơ chế nhân quả và ví dụ cụ thể phù hợp! "
-            "Hãy khen chân thành với tư cách bạn học, tóm tắt đúng 1 ý cốt lõi bạn vừa ngộ ra từ lời giải thích của bạn mình. "
-            "Không hỏi vặn làm khó nữa, chuẩn bị bước sang phần tiếp theo."
+            "Hãy khen chân thành với tư cách bạn học và tóm tắt ngắn gọn đúng 1 ý cốt lõi bạn vừa ngộ ra. "
+            "TUYỆT ĐỐI KHÔNG đặt thêm bất kỳ câu hỏi nào, KHÔNG dùng dấu hỏi (?). Hai bạn chuẩn bị chuyển sang chủ đề tiếp theo."
         )
     elif is_self_correction:
         # GOOD CASE: Học viên tự sửa sai thành công
@@ -165,6 +165,8 @@ Lời bạn học vừa giải thích:
 
 YÊU CẦU ĐẦU RA BẮT BUỘC:
 1. Độ dài: Đúng 2 đến 3 câu hoàn chỉnh về mặt cú pháp.
-2. Nếu chưa đạt 'is_mastered', câu cuối cùng PHẢI là một câu hỏi hoàn chỉnh kết thúc bằng dấu chấm hỏi (?), hỏi trúng vào điểm mù bạn học chưa nhận ra.
+2. Quy tắc câu hỏi:
+   - Nếu đã đạt 'is_mastered': TUYỆT ĐỐI KHÔNG đặt thêm câu hỏi hay dùng dấu hỏi (?), chỉ khen ngợi và đúc kết ngắn gọn trong 1-2 câu.
+   - Nếu chưa đạt 'is_mastered': Câu cuối cùng PHẢI là một câu hỏi hoàn chỉnh kết thúc bằng dấu chấm hỏi (?), hỏi trúng vào điểm mù bạn học chưa nhận ra.
 3. TUYỆT ĐỐI không dừng câu giữa chừng, không cắt cụt từ.
 4. CHỈ XUẤT DUY NHẤT LỜI THOẠI TIẾNG VIỆT CỦA ALEX (xưng mình - bạn). Tuyệt đối KHÔNG xuất ra dòng 'Here\'s a thinking process:' hay bất kỳ nội dung phân tích nháp nào ra ngoài."""
